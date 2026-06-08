@@ -34,7 +34,9 @@ KEY_SIG_POSITIONS = {
 }
 
 def transpose_dna(base_dna, shift):
-    if shift == 0: return base_dna
+    """Transpose harmony DNA database by a given semitone shift"""
+    if shift == 0: 
+        return base_dna
     transposed_db = {}
     for chord, rules in base_dna.items():
         transposed_db[chord] = {
@@ -45,7 +47,7 @@ def transpose_dna(base_dna, shift):
         }
     return transposed_db
 
-NATURAL_PCS = {0: 0, 1: 2, 2: 4, 3: 5, 4: 7, 5: 9, 6: 11} # C, D, E, F, G, A, B
+NATURAL_PCS = {0: 0, 1: 2, 2: 4, 3: 5, 4: 7, 5: 9, 6: 11}  # C, D, E, F, G, A, B
 REL_MAP = {
     0: (0, 0), 1: (1, -1), 2: (1, 0), 3: (2, -1),
     4: (2, 0), 5: (3, 0), 6: (3, 1), 7: (4, 0),
@@ -54,6 +56,10 @@ REL_MAP = {
 LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
 def spell_midi(midi_note, key_info, chord_name=""):
+    """
+    Convert MIDI note to proper enharmonic spelling based on key context.
+    Returns (letter, step, alteration, octave)
+    """
     root_pc = key_info["root_pc"]
     root_step = key_info["root_step"]
     
@@ -86,3 +92,26 @@ def spell_midi(midi_note, key_info, chord_name=""):
     octave = (midi_note - natural_pc - abs_alt) // 12 - 1
     
     return LETTERS[abs_step], abs_step, abs_alt, octave
+
+def midi_to_note_name(midi_note, key_info, chord_name=""):
+    """
+    Convert MIDI note number to formatted note name (e.g., 'C4', 'F#5', 'Bb3')
+    based on the given key information for proper enharmonic spelling.
+    """
+    letter, step, alteration, octave = spell_midi(midi_note, key_info, chord_name)
+    
+    # Format alteration
+    if alteration == 0:
+        alt_str = ""
+    elif alteration == 1:
+        alt_str = "#"
+    elif alteration == -1:
+        alt_str = "b"
+    elif alteration == 2:
+        alt_str = "##"
+    elif alteration == -2:
+        alt_str = "bb"
+    else:
+        alt_str = ""
+    
+    return f"{letter}{alt_str}{octave}"
