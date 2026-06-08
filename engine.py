@@ -26,7 +26,7 @@ def get_chord_candidates(chord_name, dna_db, target_s=None):
     candidates = []
     for new_bass in bass_candidates:
         if target_s is not None:
-            # 🌟 修复：将 < 改为 <=，允许声部同度（Unison），释放出数以千计的救命合法排列！
+            # Allow soprano unison with alto when valid for the voicing
             new_S = target_s
             lower_bound_A = new_S - 12
             valid_A = [a for a in AVAILABLE_NOTES if lower_bound_A <= a <= new_S]

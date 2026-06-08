@@ -61,7 +61,7 @@ def spell_midi(midi_note, key_info, chord_name=""):
     rel_pc = (pc - root_pc) % 12
     rel_step, rel_alt = REL_MAP[rel_pc]
     
-    # 🌟 斯波索宾异名同音修正法庭 (全系扩展版)
+    # Enharmonic spelling correction for secondary dominants
     if "/" in chord_name and "♭" not in chord_name:
         target = chord_name.split("/")[1]
         if key_info["type"] == "MAJOR":

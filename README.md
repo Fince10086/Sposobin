@@ -1,16 +1,20 @@
 # Harmonic
 
-A music and harmony-based project with game engine components.
+A harmonic voice-leading analysis and composition tool based on Riemann harmony theory. Implements classical voice-leading rules and automated four-part harmony generation using dynamic programming.
 
-## Files
+## Overview
 
-- `dna.py` - DNA/genetic algorithm implementation
-- `engine.py` - Core game engine
-- `main.py` - Main entry point
-- `player.py` - Player logic
-- `renderer.py` - Rendering and visualization
-- `rules.py` - Game rules
-- `tonality.py` - Tonality and music-related functions
+This tool provides intelligent harmonic analysis and voice-leading suggestions following traditional classical harmony rules. It supports multiple composition modes including free composition, soprano-based writing, and melody composition.
+
+## Modules
+
+- `main.py` - GUI application and main entry point
+- `engine.py` - Core voice-leading search engine using DAG-based algorithms
+- `rules.py` - Voice-leading validation rules and harmonic function constraints
+- `dna.py` - Harmonic DNA database with chord definitions and voice-leading constraints
+- `tonality.py` - Key and tonality management, pitch spelling utilities
+- `player.py` - MIDI playback functionality
+- `renderer.py` - Musical score rendering and visualization
 
 ## Getting Started
 

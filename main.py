@@ -9,7 +9,7 @@ from tonality import KEY_REGISTRY, transpose_dna, spell_midi
 from engine import calculate_best_voicing, get_chord_candidates, build_full_dag, v_to_tuple, tuple_to_v, get_chord_siblings
 from player import play_history, stop_audio
 from renderer import ScoreRenderer
-from rules import evaluate_voicing  # 🌟 核心修复：引入法则判决引擎！
+from rules import evaluate_voicing
 
 import ctypes
 try:
@@ -21,7 +21,7 @@ except:
 class HarmonyApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("斯波索宾 AI 和声引擎 - 步进写作终极修复版 (V26.0)")
+        self.root.title("斯波索宾 和声分析系统 v26.0")
         self.root.geometry("1150x880") 
         self.root.configure(bg="#F8F9FA")
 
@@ -55,7 +55,7 @@ class HarmonyApp:
         header_frame = tk.Frame(self.root, bg="#F8F9FA")
         header_frame.pack(fill=tk.X, padx=40, pady=(20, 5))
         
-        tk.Label(header_frame, text="斯波索宾 AI 和声工作站", font=("Microsoft YaHei", 18, "bold"), bg="#F8F9FA", fg="#2C3E50").pack(side=tk.LEFT)
+        tk.Label(header_frame, text="斯波索宾 和声编辑器", font=("Microsoft YaHei", 18, "bold"), bg="#F8F9FA", fg="#2C3E50").pack(side=tk.LEFT)
         
         self.mode_var = tk.StringVar(value="FREE")
         tk.Radiobutton(header_frame, text="自由模式", variable=self.mode_var, value="FREE", command=self.on_mode_change, font=("Microsoft YaHei", 12, "bold"), bg="#F8F9FA", fg="#2C3E50", cursor="hand2").pack(side=tk.LEFT, padx=(30, 5))
@@ -321,7 +321,7 @@ class HarmonyApp:
         self.dag_layers = build_full_dag(self.target_melody, self.active_dna_db, self.key_info)
         
         if not self.dag_layers:
-            tk.messagebox.showerror("此题无解！", "经过 AI 上帝视角穷举，这组高音序列在严苛的古典法则下没有完整通路！")
+            tk.messagebox.showerror("此题无解！", "该高音序列在指定的古典和声规则下无法找到有效的完整进行。")
             show_dp_debugger_window(self.target_melody, self.history, self.active_dna_db, self.key_info)
             self.target_melody = None
             return

@@ -4,7 +4,31 @@ from tonality import spell_midi
 def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name, key_info):
     new_S, new_A, new_T, new_B = new_voices['S'], new_voices['A'], new_voices['T'], new_voices['B']
     
-    # 🌟 核心升级：如果在“旋律写作模式”下，取消四大声部的绝对音域红线！
+    # Advanced harmonic function validation and state machine checks
+    
+    # 1. 拦截中音和弦 (III) 倒退：属功能的 III 级严禁向反方向进行到下属功能 (S/s/II)
+    if last_chord_name.startswith("DTᵢᵢᵢ") and (target_chord_name.startswith("S") or target_chord_name.startswith("s")):
+        return 999999
+
+    # 2. 严格限制普通四六和弦 (T64/t64)：强制其作为辅助/经过和弦，只能回到主功能 (T/t)
+    if last_chord_name in ["T₆₄", "t₆₄"]:
+        if not (target_chord_name.startswith("T") or target_chord_name.startswith("t")):
+            return 999999
+
+    # 3. 规范小调大下属 (多利亚 S)：使用大 IV/II 级后必须走向属功能组 (D/K64)，严禁直接进行到主和弦 (t) 导致调式感模糊
+    if key_info["type"] == "MINOR" and last_chord_name in ["S", "S₆", "Sᵢᵢ", "Sᵢᵢ₆"]:
+        if target_chord_name.startswith("t"):
+            return 999999
+
+    # 4. 规范小调天然七级 (VII)：天然 VII 级严禁直接进行到含还原导音的属和弦 (D)，以防不良对斜
+    if key_info["type"] == "MINOR" and last_chord_name == "VII":
+        # 允许去 DTiii，但阻止去纯正的 D 组和弦
+        if target_chord_name.startswith("D") and not target_chord_name.startswith("DT"):
+            return 999999
+            
+    # ====================================================================
+
+    # In composition mode, apply relaxed register constraints
     if key_info.get("app_mode") != "COMPOSE":
         if not (60 <= new_S <= 81): return 999999  
         if not (55 <= new_A <= 74): return 999999  
@@ -20,7 +44,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
 
     voice_overlap_penalty = 0
     if not is_same_chord:
-        # 🌟 修复：声部超越降级为极重罚分 (5000)，防止在死胡同里彻底断链
+        # Voice crossing penalty: high penalty to prevent broken solution paths
         if new_S < old_voices['A']: voice_overlap_penalty += 5000
         if new_A > old_voices['S'] or new_A < old_voices['T']: voice_overlap_penalty += 5000
         if new_T > old_voices['A'] or new_T < old_voices['B']: voice_overlap_penalty += 5000
@@ -168,7 +192,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
                             
     if parallel_penalty >= 5000: return 999999
 
-    # 🌟 新增：同度惩罚 (Unison Penalty)
+    # Unison penalty to maintain voice independence
     unison_penalty = 0
     if new_S == new_A: unison_penalty += 20
     if new_A == new_T: unison_penalty += 15
