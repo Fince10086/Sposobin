@@ -2,11 +2,11 @@
 
 from flask import Flask, render_template, request, jsonify
 import json
-from dna import MAJOR_DNA, MINOR_DNA, AVAILABLE_NOTES
-from tonality import KEY_REGISTRY, transpose_dna, spell_midi, midi_to_note_name
-from engine import build_full_dag, calculate_best_voicing, get_chord_candidates, v_to_tuple, tuple_to_v
-from player import generate_audio_data_url
-from rules import evaluate_voicing
+from prototype.dna import MAJOR_DNA, MINOR_DNA, AVAILABLE_NOTES
+from prototype.tonality import KEY_REGISTRY, transpose_dna, spell_midi, midi_to_note_name
+from prototype.engine import build_full_dag, calculate_best_voicing, get_chord_candidates, v_to_tuple, tuple_to_v
+from prototype.player import generate_audio_data_url
+from prototype.rules import evaluate_voicing
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024

@@ -4,8 +4,8 @@ from tkinter import ttk
 import tkinter.messagebox
 import re
 import time 
-from dna import MAJOR_DNA, MINOR_DNA
-from tonality import KEY_REGISTRY, transpose_dna, spell_midi
+from .dna import MAJOR_DNA, MINOR_DNA
+from .tonality import KEY_REGISTRY, transpose_dna, spell_midi
 from engine import calculate_best_voicing, get_chord_candidates, build_full_dag, v_to_tuple, tuple_to_v, get_chord_siblings
 from player import play_history, stop_audio
 from renderer import ScoreRenderer

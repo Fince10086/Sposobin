@@ -1,5 +1,5 @@
 # rules.py
-from tonality import spell_midi
+from .tonality import spell_midi
 
 def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name, key_info):
     new_S, new_A, new_T, new_B = new_voices['S'], new_voices['A'], new_voices['T'], new_voices['B']

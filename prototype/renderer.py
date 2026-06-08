@@ -1,6 +1,6 @@
 # renderer.py
-from dna import PITCH_Y
-from tonality import spell_midi, KEY_SIG_POSITIONS
+from .dna import PITCH_Y
+from .tonality import spell_midi, KEY_SIG_POSITIONS
 
 class ScoreRenderer:
     def __init__(self, canvas):
