@@ -1,6 +1,6 @@
 # renderer.py
-from .dna import PITCH_Y
-from .tonality import spell_midi, KEY_SIG_POSITIONS
+from dna import PITCH_Y
+from tonality import spell_midi, KEY_SIG_POSITIONS
 
 class ScoreRenderer:
     def __init__(self, canvas):
@@ -14,8 +14,8 @@ class ScoreRenderer:
         core, sub = "", ""
         if "不完全" in base_name: 
             core_str = base_name.replace("不完全", "").replace("₇", "").replace("₉", "")
-            core = core_str + " (不完全)"
-        elif "双三" in base_name: core = "T (双三)"
+            core = core_str + "ᵢₙᶜ"
+        elif "双三" in base_name: core = "Tᵈᵘᵃˡ"
         elif base_name.startswith("DD"): core = "DD"
         elif base_name.startswith("DT"): core = "DT"
         elif base_name.startswith("S"): core = "S"
@@ -38,7 +38,6 @@ class ScoreRenderer:
         elif "ᵢᵢ" in base_name: sub = "II"
 
         f_style = ("Times New Roman", font_size_core, "bold", "italic") if core in ["t", "s"] else ("Times New Roman", font_size_core, "bold")
-        if "不" in core or "双" in core: f_style = ("Microsoft YaHei", font_size_core - 4, "bold")
 
         id_core = target_canvas.create_text(x - 12, y, text=core, font=f_style, fill=color, anchor="center")
         right_edge = target_canvas.bbox(id_core)[2]

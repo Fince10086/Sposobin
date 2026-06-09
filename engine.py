@@ -1,7 +1,7 @@
 # engine.py
 import itertools
-from .dna import AVAILABLE_NOTES
-from .rules import evaluate_voicing
+from dna import AVAILABLE_NOTES
+from rules import evaluate_voicing
 
 def v_to_tuple(v): return (v['S'], v['A'], v['T'], v['B'])
 def tuple_to_v(t): return {'S': t[0], 'A': t[1], 'T': t[2], 'B': t[3]}
@@ -26,7 +26,7 @@ def get_chord_candidates(chord_name, dna_db, target_s=None):
     candidates = []
     for new_bass in bass_candidates:
         if target_s is not None:
-            # Allow soprano unison with alto when valid for the voicing
+            # 🌟 修复：将 < 改为 <=，允许声部同度（Unison），释放出数以千计的救命合法排列！
             new_S = target_s
             lower_bound_A = new_S - 12
             valid_A = [a for a in AVAILABLE_NOTES if lower_bound_A <= a <= new_S]

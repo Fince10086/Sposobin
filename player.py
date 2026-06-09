@@ -2,14 +2,11 @@
 import math
 import wave
 import struct
-import base64
+import winsound
+import threading
 import io
 import tempfile
 import os
-try:
-    import winsound
-except ImportError:
-    winsound = None
 
 _generation_id = 0
 _last_temp_file = None  # 用于记录和清理上一次的临时音频
@@ -60,24 +57,10 @@ def generate_wav_bytes(history):
         wav_file.writeframes(chord_audio)
     return wav_io.getvalue()
 
-def generate_audio_data_url(history):
-    """
-    Generate WAV audio from voicing history and return as base64 data URL
-    for browser playback via HTML5 audio element
-    """
-    wav_bytes = generate_wav_bytes(history)
-    wav_base64 = base64.b64encode(wav_bytes).decode('utf-8')
-    return f"data:audio/wav;base64,{wav_base64}"
-
 def stop_audio():
     global _last_temp_file
-    if winsound is None:
-        return
     # 1. 强行终止当前正在播放的声音，解除对音频文件的系统锁定
-    try:
-        winsound.PlaySound(None, winsound.SND_PURGE)
-    except:
-        pass
+    winsound.PlaySound(None, winsound.SND_PURGE)
     
     # 2. 静悄悄地把上一个临时音频文件删掉，保持硬盘干净
     if _last_temp_file and os.path.exists(_last_temp_file):
@@ -88,8 +71,6 @@ def stop_audio():
 
 def play_history(history, on_play_start=None):
     global _generation_id, _last_temp_file
-    if winsound is None:
-        return
     stop_audio()
     _generation_id += 1
     current_id = _generation_id
@@ -111,10 +92,6 @@ def play_history(history, on_play_start=None):
             on_play_start()
             
         # 🌟 绕开系统限制，使用 SND_FILENAME | SND_ASYNC 完美实现异步秒切！
-        try:
-            winsound.PlaySound(tmp_path, winsound.SND_FILENAME | winsound.SND_NODEFAULT | winsound.SND_ASYNC)
-        except:
-            pass
-    
-    import threading
+        winsound.PlaySound(tmp_path, winsound.SND_FILENAME | winsound.SND_NODEFAULT | winsound.SND_ASYNC)
+        
     threading.Thread(target=_generate_and_play, daemon=True).start()
