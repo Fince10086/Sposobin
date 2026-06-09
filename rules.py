@@ -4,16 +4,16 @@ from tonality import spell_midi
 def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name, key_info):
     """
     计算两个和弦排列之间的进行成本 (Penalty)。
-    当违背核心和声准则（如平行五八度、不规则跳进）时，返回 999999 以实现硬性阻断。
+    当违背核心和声准则（如平行五八度、不规则跳进、增减音程、非法七音解决等）时，返回 999999 以实现硬性阻断。
     """
     new_S, new_A, new_T, new_B = new_voices['S'], new_voices['A'], new_voices['T'], new_voices['B']
     
-    # 音域约束：在旋律写作模式外，对四个声部进行严格的音域检查
+    # 音域约束放宽，支持极端高音题旋律线下探 (解决 B3/A3 导致断链的问题)
     if key_info.get("app_mode") != "COMPOSE":
-        if not (60 <= new_S <= 81): return 999999  
-        if not (55 <= new_A <= 74): return 999999  
-        if not (48 <= new_T <= 67): return 999999  
-        if not (36 <= new_B <= 62): return 999999  
+        if not (57 <= new_S <= 84): return 999999  # 女高音: A3 - C6
+        if not (53 <= new_A <= 74): return 999999  # 女低音: F3 - D5
+        if not (45 <= new_T <= 69): return 999999  # 男高音: A2 - A4
+        if not (36 <= new_B <= 64): return 999999  # 男低音: C2 - E4
 
     # 声部间距约束 (Spacing)
     if not (new_S >= new_A and new_A >= new_T and new_T > new_B): return 999999
@@ -54,24 +54,55 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
     elif bass_leap in [8, 9]: bass_penalty += 50   
     else: bass_penalty += bass_leap * 0.5 
 
-    # 上声部跳进规则 (Melodic Leaps)
+    # 提前拼写音符，供后续音程模与特性解决法则使用
+    old_spells = {v: spell_midi(old_voices[v], key_info, last_chord_name) for v in ['S', 'A', 'T', 'B']}
+    new_spells = {v: spell_midi(new_voices[v], key_info, target_chord_name) for v in ['S', 'A', 'T', 'B']}
+
+    # 上声部基本跳进幅度
     leap_S = abs(new_S - old_voices['S'])
     leap_A = abs(new_A - old_voices['A'])
     leap_T = abs(new_T - old_voices['T'])
-    forbidden_leaps = {10, 11}
-    
-    # 属到主和弦时，旋律音允许四度或五度跳进解决的特殊情况
+
+    # 属到主和弦时，旋律音允许四度或五度跳进解决的特殊情况 (供后续罚分参考)
     is_amnesty_S = False
     if last_chord_name in ["D₃₄", "D₅₆", "D₇", "D⁶", "DD₃₄♭⁵", "DD₂♭⁵", "DD₅₆♭⁵", "DD₇♭⁵", "D₇不完全"] and target_chord_name in ["T", "T不完全", "D", "D₇", "K₆₄", "t", "t不完全"]:
         if leap_S in [5, 7, 0]: is_amnesty_S = True 
 
-    if not is_amnesty_S and (leap_S in forbidden_leaps or leap_S in [5, 7]):
-        if leap_S in forbidden_leaps: return 999999
+    # === 核心规则补丁：增减音程与危险跳进通用数学过滤器 ===
+    for v in ['S', 'A', 'T', 'B']:
+        leap = abs(new_voices[v] - old_voices[v])
+        if leap == 0: continue
+            
+        _, old_step, _, _ = old_spells[v]
+        _, new_step, _, _ = new_spells[v]
+        
+        # 计算自然音级差 (0-6) 与 半音程模 (0-6)
+        step_diff = abs(new_step - old_step)
+        norm_step = min(step_diff, 7 - step_diff)
+        norm_ic = min(leap % 12, 12 - (leap % 12))
+        
+        is_unclassical_interval = False
+        
+        # 完美的古典旋律映射法则：一旦音级跨度与物理半音不匹配，必定是增减音程
+        if norm_step == 1 and norm_ic not in [1, 2]: is_unclassical_interval = True
+        elif norm_step == 2 and norm_ic not in [3, 4]: is_unclassical_interval = True
+        elif norm_step == 3 and norm_ic != 5: is_unclassical_interval = True
+        elif norm_step == 0 and norm_ic not in [0, 1]: is_unclassical_interval = True
 
-    if forbidden_leaps.intersection({leap_A, leap_T}) and not is_same_chord: return 999999
-
-    old_spells = {v: spell_midi(old_voices[v], key_info, last_chord_name) for v in ['S', 'A', 'T', 'B']}
-    new_spells = {v: spell_midi(new_voices[v], key_info, target_chord_name) for v in ['S', 'A', 'T', 'B']}
+        if is_unclassical_interval:
+            # 唯一的古典特例豁免：低音允许减五度下行
+            if v == 'B' and leap == 6 and new_voices[v] < old_voices[v]:
+                pass 
+            # 🌟 新增修复：豁免女高音（Soprano）的硬性阻断。
+            # 因为在解题时，既定旋律常包含模进的“分句死音程”（如增四度大跳），引擎无权罢工，必须服从
+            elif v == 'S':
+                pass 
+            else:
+                return 999999
+                
+        # 追加拦截：严格限制内声部与低音的普通大跳（大六度及以上，八度除外）
+        if leap in [9, 10, 11] or leap > 12:
+            if v != 'S': return 999999
 
     # 增六和弦 (Augmented Sixth Chords) 的特性解决规则：增六度需向外扩张至纯八度
     if last_chord_name.startswith(("It⁺⁶", "Ger⁺⁶", "Fr⁺⁶")):
@@ -138,14 +169,6 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
             if old_step == (key_info["root_step"] + 2) % 7: 
                 _, new_step, _, _ = new_spells[v]
                 if new_step not in [(key_info["root_step"] + 1) % 7, (key_info["root_step"] + 3) % 7]: return 999999
-
-    for v in ['S', 'A', 'T', 'B']:
-        leap = abs(new_voices[v] - old_voices[v])
-        if leap == 3: 
-            _, old_step, _, _ = old_spells[v]
-            _, new_step, _, _ = new_spells[v]
-            step_diff = abs(new_step - old_step)
-            if step_diff == 1 or step_diff == 6: return 999999
 
     if last_chord_name.startswith("T") and target_chord_name.startswith("DD") and "♭⁵" in target_chord_name:
         for v in ['S', 'A', 'T', 'B']:
@@ -218,6 +241,26 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
         if "ᵥᵢᵢ" in target_chord_name or "⁺⁶" in target_chord_name or "DD" in target_chord_name:
             unison_penalty *= 4
 
+    # 核心规则补丁：副七和弦 (Secondary Sevenths) 风格与解决约束
+    rare_sevenths = ["T₇", "t₇", "VI₇", "DTᵢᵢᵢ₇", "S₇", "s₇"]
+    stylistic_penalty = 0
+
+    if target_chord_name in rare_sevenths:
+        stylistic_penalty += 2000  
+        if leap_S > 2 or leap_A > 2 or leap_T > 2:
+            return 999999  
+            
+    if last_chord_name in rare_sevenths:
+        has_step_down = False
+        for v in ['S', 'A', 'T', 'B']:
+            diff = old_voices[v] - new_voices[v]
+            if diff in [1, 2]: 
+                has_step_down = True
+                break
+                
+        if not has_step_down:
+            return 999999  
+
     # 旋律跳进与平稳性评估
     melody_penalty = 0
     if is_amnesty_S: melody_penalty = 0
@@ -237,4 +280,4 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
         elif leap in [3, 4]: inner_penalty += leap * 1.2 
         else: inner_penalty += leap * 2.0 
 
-    return bass_penalty + melody_penalty + inner_penalty + parallel_penalty + false_relation_penalty + all_same_dir_penalty + voice_overlap_penalty + unison_penalty + (20 if is_amnesty_S else 0)
+    return bass_penalty + melody_penalty + inner_penalty + parallel_penalty + false_relation_penalty + all_same_dir_penalty + voice_overlap_penalty + unison_penalty + stylistic_penalty + (20 if is_amnesty_S else 0)
