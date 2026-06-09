@@ -1,4 +1,3 @@
-```markdown
 # 🎹 基于动态规划的传统和声算法推演引擎 (Classical Harmony DP-Engine)
 
 ![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue.svg)
