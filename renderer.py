@@ -92,13 +92,11 @@ class ScoreRenderer:
             self.canvas.create_text(x, treble_y + y_offset, text=symbol, font=("Segoe UI Symbol", 18, "bold"), fill="#2C3E50", anchor="center")
             self.canvas.create_text(x, bass_y + y_offset, text=symbol, font=("Segoe UI Symbol", 18, "bold"), fill="#2C3E50", anchor="center")
 
-    # 🌟 新增 pending_note 参数
     def draw_entire_score(self, history, key_info, target_melody=None, playback_index=None, pending_note=None):
         self.canvas.delete("all")
         
         spacing = 85
         start_x = 95 + key_info["sigs"] * 12
-        # 如果有悬空音，预留一个格子的空间
         total_steps = max(len(history) + (1 if pending_note else 0), len(target_melody) if target_melody else 0)
         max_x = start_x + total_steps * spacing + 100
         
@@ -107,16 +105,21 @@ class ScoreRenderer:
         if cw < 10: cw = 900
         canvas_width = max(cw, max_x)
         
-        self.canvas.config(scrollregion=(0, 0, canvas_width, 220))
+        # 🌟 更新内部滚动区域的高度
+        self.canvas.config(scrollregion=(0, 0, canvas_width, 270))
 
+        # 🌟 重新布局五线谱线：低音谱表下移 50 像素，加大间距
         for i in range(5):
             self.canvas.create_line(50, 40 + i * 10, canvas_width, 40 + i * 10, fill="#6C757D")
-            self.canvas.create_line(50, 120 + i * 10, canvas_width, 120 + i * 10, fill="#6C757D")
-        self.canvas.create_line(50, 40, 50, 160, fill="#6C757D", width=2)
-        self.canvas.create_line(canvas_width-5, 40, canvas_width-5, 160, fill="#6C757D", width=2)
+            self.canvas.create_line(50, 170 + i * 10, canvas_width, 170 + i * 10, fill="#6C757D")
         
+        # 🌟 左侧/右侧的贯通连接线相应拉长
+        self.canvas.create_line(50, 40, 50, 210, fill="#6C757D", width=2)
+        self.canvas.create_line(canvas_width-5, 40, canvas_width-5, 210, fill="#6C757D", width=2)
+        
+        # 🌟 谱号定位下移
         self.canvas.create_text(35, 68, text="𝄞", font=("Segoe UI Symbol", 42), fill="#6C757D")
-        self.canvas.create_text(35, 134, text="𝄢", font=("Segoe UI Symbol", 38), fill="#6C757D")
+        self.canvas.create_text(35, 184, text="𝄢", font=("Segoe UI Symbol", 38), fill="#6C757D")
 
         self.draw_key_signature(key_info)
 
@@ -186,7 +189,8 @@ class ScoreRenderer:
                     self.canvas.create_text(acc_x, y + y_offset, text=symbol, font=("Segoe UI Symbol", 14, "bold"), fill="#2C3E50", anchor="center")
                     running_accidentals[acc_key] = abs_alt
 
-                click_area = self.canvas.create_rectangle(x - 20, 20, x + 20, 190, fill="", outline="", tags="chord_clickable")
+                # 🌟 点击判定区域随画布高度拉长
+                click_area = self.canvas.create_rectangle(x - 20, 20, x + 20, 240, fill="", outline="", tags="chord_clickable")
                 self.canvas.tag_bind(click_area, "<Button-1>", lambda e, idx=index: self.on_history_click(idx))
 
                 self.canvas.create_oval(note_x-8, y-5.5, note_x+8, y+5.5, fill="#2C3E50", outline="#1A252F", width=1.5)
@@ -194,18 +198,18 @@ class ScoreRenderer:
                 if voice_name in ['S', 'T']: self.canvas.create_line(note_x+7, y, note_x+7, y-25, fill="#2C3E50", width=1.5)
                 else: self.canvas.create_line(note_x-7, y, note_x-7, y+25, fill="#2C3E50", width=1.5)
                 
+                # 🌟 校准加线（Ledger lines）的生成范围判定
                 if not is_bass:
                     if y >= 90:
                         for ly in range(90, y+1, 10): self.canvas.create_line(note_x-13, ly, note_x+13, ly, width=1.5)
                     if y <= 30:
                         for ly in range(30, y-1, -10): self.canvas.create_line(note_x-13, ly, note_x+13, ly, width=1.5)
                 else:
-                    if y <= 110:
-                        for ly in range(110, y-1, -10): self.canvas.create_line(note_x-13, ly, note_x+13, ly, width=1.5)
-                    if y >= 170:
-                        for ly in range(170, y+1, 10): self.canvas.create_line(note_x-13, ly, note_x+13, ly, width=1.5)
+                    if y <= 160:
+                        for ly in range(160, y-1, -10): self.canvas.create_line(note_x-13, ly, note_x+13, ly, width=1.5)
+                    if y >= 220:
+                        for ly in range(220, y+1, 10): self.canvas.create_line(note_x-13, ly, note_x+13, ly, width=1.5)
 
-        # 🌟 画悬空的单个旋律音（步进作曲模式专用）
         if pending_note is not None:
             x = start_x + len(history) * spacing
             letter, abs_step, abs_alt, octave = spell_midi(pending_note, key_info, "")
@@ -213,7 +217,6 @@ class ScoreRenderer:
             y = PITCH_Y.get(y_lookup)
             
             if y is not None:
-                # 绘制亮橙色的高音，代表它正在等待配和弦
                 self.canvas.create_oval(x-8, y-5.5, x+8, y+5.5, fill="#E67E22", outline="#D35400", width=1.5)
                 self.canvas.create_line(x+7, y, x+7, y-25, fill="#E67E22", width=1.5)
                 
@@ -222,7 +225,6 @@ class ScoreRenderer:
                 if y <= 30:
                     for ly in range(30, y-1, -10): self.canvas.create_line(x-13, ly, x+13, ly, width=1.5, fill="#95A5A6")
 
-        # 画虚线占位符 (针对传统高音题模式)
         elif target_melody and len(history) < len(target_melody):
             for i in range(len(history), len(target_melody)):
                 x = start_x + i * spacing
@@ -263,7 +265,8 @@ class ScoreRenderer:
             else:
                 playhead_x = start_x + max(0, len(history)-1) * spacing
             
-        self.canvas.create_line(playhead_x, 15, playhead_x, 185, fill="#2ECC71", width=2, dash=(4, 2), tags="playhead_layer")
+        # 🌟 播放头指示线向下拉长
+        self.canvas.create_line(playhead_x, 15, playhead_x, 235, fill="#2ECC71", width=2, dash=(4, 2), tags="playhead_layer")
         self.canvas.create_polygon(playhead_x-6, 15, playhead_x+6, 15, playhead_x, 25, fill="#2ECC71", tags="playhead_layer")
 
         golden_x = cw * 0.382

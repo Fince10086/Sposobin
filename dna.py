@@ -45,7 +45,6 @@ MAJOR_DNA = {
     "Dᵥᵢᵢ₃₄/VI": {"next": ["VI", "♭VI"], "bass_options": [62, 50], "required": {8, 11, 2, 5}, "max_counts": {8:1, 11:1, 2:1, 5:1}},
     "Dᵥᵢᵢ₂/VI": {"next": ["VI", "♭VI"], "bass_options": [65, 53], "required": {8, 11, 2, 5}, "max_counts": {8:1, 11:1, 2:1, 5:1}},
 
-    # 🌟 和声大调核心扩展开始 🌟
     "s": {"next": ["D", "D₇", "D₇不完全", "T", "T₆", "s₆", "D₆", "K₆₄", "D₅₆", "D₃₄", "D₂", "sᵢᵢ₇", "sᵢᵢ₅₆", "Dᵥᵢᵢ₇♭", "D⁶", "DD", "DD₆", "DD₇", "DD₅₆", "DDᵥᵢᵢ₇", "T₆₄", "N₆", "It⁺⁶", "Ger⁺⁶", "Fr⁺⁶", "♭VII", "♭VII₆"], "bass_options": [41, 53], "required": {5, 8, 0}, "max_counts": {8: 1, 0: 1}},  
     "s₆": {"next": ["s", "D", "D₇", "D₇不完全", "T", "T₆", "K₆₄", "D₅₆", "D₃₄", "D₂", "sᵢᵢ₇", "sᵢᵢ₅₆", "sᵢᵢ₃₄", "D⁶", "DD", "DD₆", "DD₇", "DD₅₆", "DDᵥᵢᵢ₇", "T₆₄", "N₆", "It⁺⁶", "Ger⁺⁶", "Fr⁺⁶", "♭VII", "♭VII₆"], "bass_options": [44, 56], "required": {5, 8, 0}, "max_counts": {8: 1}},
     "s₆₄": {"next": ["T"], "bass_options": [48, 36], "required": {5, 8, 0}, "max_counts": {5: 1, 8: 1}},
@@ -74,7 +73,6 @@ MAJOR_DNA = {
     "t不完全": {"next": ["s", "S", "D", "t₆", "S₆", "s₆", "VI", "♭VI", "D₅₆", "D₃₄", "D₂", "Sᵢᵢ₇", "sᵢᵢ₇"], "bass_options": [48, 36], "required": {0, 3}, "max_counts": {3: 1}},
 
     "t₆": {"next": ["s", "S", "D", "t", "S₆", "s₆", "VI", "♭VI", "D₅₆", "D₃₄", "D₂", "Sᵢᵢ₇", "sᵢᵢ₇", "Dᵥᵢᵢ₇", "Dᵥᵢᵢ₇♭"], "bass_options": [39, 51], "required": {0, 3, 7}, "max_counts": {3: 1}},
-    # 🌟 和声大调核心扩展结束 🌟
 
     "S": {"next": ["D", "T", "T₆", "S₆", "D₆", "K₆₄", "Sᵢᵢ", "Sᵢᵢ₆", "D₇", "D₇不完全", "D₅₆", "D₃₄", "D₂", "Sᵢᵢ₇", "Sᵢᵢ₅₆", "Dᵥᵢᵢ₇", "Dᵥᵢᵢ₆", "D⁶", "S₇", "VI₇", "DD", "DD₆", "DD₇", "DD₅₆", "DDᵥᵢᵢ₇", "T₆₄", "D₇/VI", "Dᵥᵢᵢ₇/VI", "N₆", "It⁺⁶", "Ger⁺⁶", "Fr⁺⁶"], "bass_options": [41, 53], "required": {5, 9, 0}, "max_counts": {9: 1, 0: 1}},  
     "S₆": {"next": ["S", "D", "D₇", "D₇不完全", "T", "K₆₄", "D₅₆", "D₃₄", "D₂", "Sᵢᵢ₇", "Sᵢᵢ₅₆", "Sᵢᵢ₃₄", "D⁶", "S₇", "DD", "DD₆", "DD₇", "DD₅₆", "T₆₄", "D₇/VI", "Dᵥᵢᵢ₇/VI", "N₆", "It⁺⁶", "Ger⁺⁶", "Fr⁺⁶"], "bass_options": [45, 57], "required": {5, 9, 0}, "max_counts": {9: 1}},
@@ -217,15 +215,17 @@ MINOR_DNA = {
     "Dᵥᵢᵢ₂": {"next": ["t₆₄", "D₇", "D₇不完全"], "bass_options": [44, 56], "required": {11, 2, 5, 8}, "max_counts": {11:1, 2:1, 5:1, 8:1}}  
 }
 
+# 🌟 全局向下平移 50 像素，增加谱表间距，并补全男高音极限突破后的低音坐标系
 PITCH_Y = {
     "B6": -10, "A6": -5, "G6": 0, "F6": 5, "E6": 10, "D6": 15, "C6": 20, "B5": 25,
     "A5": 30, "G5": 35, "F5": 40, "E5": 45, "D5": 50, "C5": 55, "B4": 60, "A4": 65, "G4": 70, "F4": 75, "E4": 80, "D4": 85, "C4": 90, "B3": 95, "A3": 100, "G3": 105, 
     "F3": 110, "E3": 115, "D3": 120, "C3": 125, "B2": 130, "A2": 135, "G2": 140, "F2": 145, "E2": 150, "D2": 155, "C2": 160,
     
-    "B4_bass": 80, "A4_bass": 85, "G4_bass": 90, "F4_bass": 95, "E4_bass": 100, "D4_bass": 105, "C4_bass": 110, "B3_bass": 115, "A3_bass": 120, "G3_bass": 125, "F3_bass": 130, "E3_bass": 135, "D3_bass": 140, "C3_bass": 145, "B2_bass": 150, "A2_bass": 155, "G2_bass": 160, "F2_bass": 165,
-    "E2_bass": 170, "D2_bass": 175, "C2_bass": 180, "B1_bass": 185, "A1_bass": 190, 
-    "G1_bass": 195, "F1_bass": 200, "E1_bass": 205, "D1_bass": 210, "C1_bass": 215, "B0_bass": 220, "A0_bass": 225
+    "C6_bass": 90, "B5_bass": 95, "A5_bass": 100, "G5_bass": 105, "F5_bass": 110, "E5_bass": 115, "D5_bass": 120, "C5_bass": 125,
+    "B4_bass": 130, "A4_bass": 135, "G4_bass": 140, "F4_bass": 145, "E4_bass": 150, "D4_bass": 155, "C4_bass": 160, "B3_bass": 165,
+    "A3_bass": 170, "G3_bass": 175, "F3_bass": 180, "E3_bass": 185, "D3_bass": 190, "C3_bass": 195, "B2_bass": 200, "A2_bass": 205,
+    "G2_bass": 210, "F2_bass": 215, "E2_bass": 220, "D2_bass": 225, "C2_bass": 230, "B1_bass": 235, "A1_bass": 240, 
+    "G1_bass": 245, "F1_bass": 250, "E1_bass": 255, "D1_bass": 260, "C1_bass": 265, "B0_bass": 270, "A0_bass": 275
 }
 
-# 🌟 将可用音库扩展至 C2(36) 到 B6(95) 全面解禁
 AVAILABLE_NOTES = list(range(36, 96))

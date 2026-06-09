@@ -7,9 +7,11 @@ def v_to_tuple(v): return (v['S'], v['A'], v['T'], v['B'])
 def tuple_to_v(t): return {'S': t[0], 'A': t[1], 'T': t[2], 'B': t[3]}
 
 def get_chord_siblings(chord_name, dna_db):
-    """Return all chord names in dna_db that are inversion/function siblings of chord_name.
-    For '/chords' (secondary dominants): match all chords with the same '/target'.
-    For diatonic chords: match all chords sharing the same root (stripping inversion markers)."""
+    """
+    返回和声数据库中与 chord_name 具有相同功能属性（转位或离调目标）的集合。
+    - 对于副属和弦 (包含 '/'): 匹配所有指向相同目标的和弦。
+    - 对于自然音级和弦: 根据根音剥离转位标记，匹配同根音的集合。
+    """
     if "/" in chord_name:
         target = chord_name.split("/")[1]
         return [k for k in dna_db if k.endswith("/" + target)]
@@ -18,6 +20,14 @@ def get_chord_siblings(chord_name, dna_db):
         return [k for k in dna_db if k.startswith(base) and "/" not in k]
 
 def get_chord_candidates(chord_name, dna_db, target_s=None):
+    """
+    生成特定和弦的合法声部排列（Voicing）候选集。
+    
+    Args:
+        chord_name: 目标和弦名称
+        dna_db: 和弦特征数据库
+        target_s: 指定的旋律最高音 (Soprano MIDI值)。若为 None，则进行全局排列组合枚举。
+    """
     dna = dna_db[chord_name]
     bass_candidates = dna["bass_options"]
     required_classes = dna["required"]
@@ -26,13 +36,13 @@ def get_chord_candidates(chord_name, dna_db, target_s=None):
     candidates = []
     for new_bass in bass_candidates:
         if target_s is not None:
-            # 🌟 修复：将 < 改为 <=，允许声部同度（Unison），释放出数以千计的救命合法排列！
+            # 允许同度（Unison）发生，扩大合法排列的解空间范围
             new_S = target_s
             lower_bound_A = new_S - 12
             valid_A = [a for a in AVAILABLE_NOTES if lower_bound_A <= a <= new_S]
             for new_A in valid_A:
                 lower_bound_T = new_A - 12
-                # 男低音必须严格低于男高音，但男高音可以和女低音同度
+                # 男低音必须严格低于男高音，但内声部允许发生同度
                 valid_T = [t for t in AVAILABLE_NOTES if lower_bound_T <= t <= new_A and t > new_bass]
                 for new_T in valid_T:
                     all_pcs = [new_S % 12, new_A % 12, new_T % 12, new_bass % 12]
@@ -49,7 +59,7 @@ def get_chord_candidates(chord_name, dna_db, target_s=None):
             for combo in itertools.combinations_with_replacement(AVAILABLE_NOTES, 3):
                 new_S, new_A, new_T = sorted(combo, reverse=True)
                 
-                # 同样的同度解放
+                # 同度规则
                 if new_S < new_A or new_A < new_T or new_T <= new_bass: continue
                 if (new_S - new_A) > 12 or (new_A - new_T) > 12: continue
                     
@@ -67,6 +77,10 @@ def get_chord_candidates(chord_name, dna_db, target_s=None):
     return candidates
 
 def build_full_dag(target_melody, dna_db, key_info):
+    """
+    基于目标旋律序列，利用动态规划算法构建完整的有向无环图（DAG）。
+    该图包含了所有符合严格和声规则（Voice Leading）的节点路径。
+    """
     layers = []
     
     start_candidates = ["T", "T₆", "D", "D₆", "S", "S₆", "D₇", "t", "t₆", "s", "s₆"] 
@@ -113,6 +127,7 @@ def build_full_dag(target_melody, dna_db, key_info):
             for nxt_c in possible_nexts:
                 if nxt_c not in dna_db: continue
                 for nxt_v in cand_cache.get(nxt_c, []):
+                    # 通过罚分系统进行评估，低于致命阈值（999999）即视为合法连接
                     if evaluate_voicing(tuple_to_v(v_tup), nxt_v, c_name, nxt_c, key_info) < 999999:
                         nxt_state = (nxt_c, v_to_tuple(nxt_v))
                         if nxt_state not in next_layer:
@@ -122,9 +137,9 @@ def build_full_dag(target_melody, dna_db, key_info):
 
         layers.append(next_layer)
         if not next_layer:
-            # 🛡️ 半音阶终极兜底保险：当正统功能连接全部破裂时，启动全库大搜索
-            # 允许上一层所有和弦直接跳转到任何能覆盖目标音的和弦，由声部法则做最终裁决
-            prev_layer = layers[-2]  # 上一层（有数据的）
+            # 异常处理机制（Fallback）：当标准功能序进路径断裂时，启用全集搜索，
+            # 允许系统忽略功能连接图，仅受声部进行法则（Voice Leading）约束。
+            prev_layer = layers[-2]  
             fallback_cands = {}
             for nxt_c in dna_db:
                 fallback_cands[nxt_c] = get_chord_candidates(nxt_c, dna_db, tgt_s)
@@ -143,6 +158,7 @@ def build_full_dag(target_melody, dna_db, key_info):
             layers.pop()
             layers.append(next_layer)
 
+    # 裁剪过程：反向遍历删除无效死端（Dead Ends）
     valid_final_chords = {"T", "T不完全", "T双三", "t", "t不完全"}
     invalid_finals = [state for state in layers[-1].keys() if state[0] not in valid_final_chords]
     
@@ -169,6 +185,9 @@ def build_full_dag(target_melody, dna_db, key_info):
     return layers
 
 def calculate_best_voicing(chord_sequence, initial_voicing, dna_db, key_info, target_melody=None):
+    """
+    通过 Viterbi 算法，计算已知和弦序列的最佳声部排列路径（最小化进行罚分）。
+    """
     dp = [{(chord_sequence[0], v_to_tuple(initial_voicing)): (0, None)}]
     
     for i in range(1, len(chord_sequence)):

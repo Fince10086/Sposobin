@@ -28,9 +28,10 @@ KEY_REGISTRY = {
     "ab 小调 (ab minor)": {"type": "MINOR", "shift": -4, "sig_type": "flat", "sigs": 7, "root_pc": 8, "root_step": 5},
 }
 
+# 🌟 低音谱表升降号向下平移 50 像素
 KEY_SIG_POSITIONS = {
-    "sharp": {"treble": [40, 55, 35, 50, 65, 45, 60], "bass": [130, 145, 125, 140, 155, 135, 150]},
-    "flat":  {"treble": [60, 45, 65, 50, 70, 55, 75], "bass": [150, 135, 155, 140, 160, 145, 165]}
+    "sharp": {"treble": [40, 55, 35, 50, 65, 45, 60], "bass": [180, 195, 175, 190, 205, 185, 200]},
+    "flat":  {"treble": [60, 45, 65, 50, 70, 55, 75], "bass": [200, 185, 205, 190, 210, 195, 215]}
 }
 
 def transpose_dna(base_dna, shift):
@@ -61,7 +62,6 @@ def spell_midi(midi_note, key_info, chord_name=""):
     rel_pc = (pc - root_pc) % 12
     rel_step, rel_alt = REL_MAP[rel_pc]
     
-    # 🌟 斯波索宾异名同音修正法庭 (全系扩展版)
     if "/" in chord_name and "♭" not in chord_name:
         target = chord_name.split("/")[1]
         if key_info["type"] == "MAJOR":

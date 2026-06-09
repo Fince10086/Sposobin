@@ -19,6 +19,7 @@ except:
     except: pass
 
 class GridFlowFrame(tk.Frame):
+    """自适应网格布局容器，用于动态排列和弦按钮"""
     def __init__(self, master, item_width=105, **kwargs):
         super().__init__(master, **kwargs)
         self.item_width = item_width
@@ -38,7 +39,7 @@ class GridFlowFrame(tk.Frame):
 class HarmonyApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("斯波索宾 AI 和声引擎 - 步进写作终极修复版 (V26.0)")
+        self.root.title("传统和声推演引擎 - 专业版 (V26.0)")
         self.root.geometry("1150x880") 
         self.root.configure(bg="#F8F9FA")
 
@@ -65,7 +66,7 @@ class HarmonyApp:
         header_frame = tk.Frame(self.root, bg="#F8F9FA")
         header_frame.pack(fill=tk.X, padx=40, pady=(20, 5))
         
-        tk.Label(header_frame, text="斯波索宾 AI 和声工作站", font=("Microsoft YaHei", 18, "bold"), bg="#F8F9FA", fg="#2C3E50").pack(side=tk.LEFT)
+        tk.Label(header_frame, text="传统和声算法推演工作站", font=("Microsoft YaHei", 18, "bold"), bg="#F8F9FA", fg="#2C3E50").pack(side=tk.LEFT)
         
         self.mode_var = tk.StringVar(value="FREE")
         tk.Radiobutton(header_frame, text="自由模式", variable=self.mode_var, value="FREE", command=self.on_mode_change, font=("Microsoft YaHei", 12, "bold"), bg="#F8F9FA", fg="#2C3E50", cursor="hand2").pack(side=tk.LEFT, padx=(30, 5))
@@ -97,13 +98,14 @@ class HarmonyApp:
         tk.Button(btn_frame, text="撤销", command=self.undo_note, font=("Microsoft YaHei", 9), padx=5, cursor="hand2").pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 2))
         tk.Button(btn_frame, text="清空", command=self.clear_notes, font=("Microsoft YaHei", 9), padx=5, cursor="hand2").pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(2, 0))
 
-        self.gen_btn = tk.Button(self.soprano_frame, text="▶ 全局穷举\n生成题解", font=("Microsoft YaHei", 10, "bold"), command=self.start_soprano_mode, bg="#E67E22", fg="white", relief="flat", cursor="hand2", padx=8, pady=8)
+        self.gen_btn = tk.Button(self.soprano_frame, text="▶ 算法推演\n生成题解", font=("Microsoft YaHei", 10, "bold"), command=self.start_soprano_mode, bg="#E67E22", fg="white", relief="flat", cursor="hand2", padx=8, pady=8)
         self.gen_btn.pack(side=tk.LEFT, padx=(10, 20))
 
         self.canvas_frame = tk.Frame(self.root, bg="#F8F9FA")
         self.canvas_frame.pack(fill=tk.X, padx=40, pady=10)
         
-        self.canvas = tk.Canvas(self.canvas_frame, height=220, bg="white", highlightbackground="#DEE2E6")
+        # 🌟 此处的 height 已扩大至 270 像素，防止下方低音加线被截断
+        self.canvas = tk.Canvas(self.canvas_frame, height=270, bg="white", highlightbackground="#DEE2E6")
         self.scrollbar = tk.Scrollbar(self.canvas_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
         self.canvas.configure(xscrollcommand=self.scrollbar.set)
         self.canvas.pack(side=tk.TOP, fill=tk.X, expand=True)
@@ -140,6 +142,7 @@ class HarmonyApp:
             self.btn_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def draw_piano_keyboard(self):
+        """绘制可视化钢琴键盘用于MIDI输入"""
         self.pk_canvas.delete("all")
         start_midi = 57 
         end_midi = 82
@@ -251,17 +254,17 @@ class HarmonyApp:
     def start_soprano_mode(self):
         text = self.melody_entry_var.get().strip()
         if not text:
-            tk.messagebox.showerror("序列为空", "请录入旋律！可弹奏左侧键盘或直接复制粘贴文本。")
+            tk.messagebox.showerror("序列为空", "请录入旋律序列（可使用可视化键盘或文本输入）。")
             return
         parsed = self.parse_melody_str(text)
         if not parsed:
-            tk.messagebox.showerror("格式错误", "无法解析旋律文本！")
+            tk.messagebox.showerror("格式错误", "旋律文本解析失败，请检查格式。")
             return
         self.target_melody = parsed
         self.dag_layers = build_full_dag(self.target_melody, self.active_dna_db, self.key_info)
         
         if not self.dag_layers:
-            tk.messagebox.showerror("此题无解！", "经过 AI 上帝视角穷举，这组高音序列在严苛的古典法则下没有完整通路！")
+            tk.messagebox.showerror("推演失败", "经过算法穷举验证，该高音序列在严格的古典和声法则下无法形成完整的合法通路。")
             show_dp_debugger_window(self.target_melody, self.history, self.active_dna_db, self.key_info)
             self.target_melody = None
             return
@@ -310,36 +313,36 @@ class HarmonyApp:
 
         if self.app_mode == "SOPRANO":
             if self.target_melody and len(self.history) >= len(self.target_melody):
-                tk.Label(self.main_split_frame, text="🎉 恭喜！这道高音题已被你完美破解！", font=("Microsoft YaHei", 16, "bold"), bg="#F8F9FA", fg="#27AE60").pack(pady=40)
+                tk.Label(self.main_split_frame, text="✅ 验证完成：和声序列已成功覆盖所有目标旋律音。", font=("Microsoft YaHei", 16, "bold"), bg="#F8F9FA", fg="#27AE60").pack(pady=40)
                 return
 
         next_chords = []
 
         if not self.history:
             if self.app_mode == "SOPRANO" and self.target_melody:
-                self.status_lbl.config(text=f"当前挑战第 1/{len(self.target_melody)} 个音，AI 已为您展开完整通路：")
+                self.status_lbl.config(text=f"当前进度：第 1/{len(self.target_melody)} 音级。算法已构建全局 DAG 连通图：")
                 valid_states = self.dag_layers[0].keys()
                 next_chords = list(set([state[0] for state in valid_states]))
             elif self.app_mode == "COMPOSE":
                 if self.pending_melody_note is None:
-                    self.status_lbl.config(text="🎹 旋律写作模式：请在上方宽阔的钢琴上点选你的第 1 个音...")
+                    self.status_lbl.config(text="🎹 旋律写作模式：请在键盘区输入初始旋律音。")
                 else:
-                    self.status_lbl.config(text=f"🎶 已放置高音（亮橙色），AI 引擎推荐以下起手和弦：")
+                    self.status_lbl.config(text=f"🎶 已输入旋律音级，推荐以下符合声部排列规则的初始和弦：")
                     tgt_s = self.pending_melody_note
                     for c_name in self.active_dna_db.keys():
                         if get_chord_candidates(c_name, self.active_dna_db, tgt_s):
                             next_chords.append(c_name)
                     if not next_chords:
-                        self.status_lbl.config(text=f"⚠️ 警告：古典和声库中没有任何一个和弦能够包含你选择的音符，请换一个音。")
+                        self.status_lbl.config(text=f"⚠️ 校验未通过：当前和声规则库中不存在包含该音级的合法和弦，请检查输入。")
             else:
-                self.status_lbl.config(text="创世时刻：请选择你的起手和弦 (左侧：本调功能组 | 右侧：离调通道)：")
+                self.status_lbl.config(text="初始化配置：请选择起始和弦分布（左侧：自然音阶 | 右侧：离调/半音体系）：")
                 next_chords = list(self.active_dna_db.keys())
         else:
             current_item = self.history[-1]
             current_chord_name = current_item["chord"]
             
             if self.app_mode == "SOPRANO":
-                self.status_lbl.config(text=f"当前挑战第 {len(self.history)+1}/{len(self.target_melody)} 个音，当前备选池 100% 安全：")
+                self.status_lbl.config(text=f"当前进度：第 {len(self.history)+1}/{len(self.target_melody)} 音级。备选路径已校验：")
                 step = len(self.history)
                 if step >= len(self.target_melody): return
                 
@@ -351,9 +354,9 @@ class HarmonyApp:
                 
             elif self.app_mode == "COMPOSE":
                 if self.pending_melody_note is None:
-                    self.status_lbl.config(text=f"🎹 已完成 {len(self.history)} 个和弦，请继续在上方钢琴点选下一个旋律音...")
+                    self.status_lbl.config(text=f"🎹 已生成 {len(self.history)} 个和声节点，等待下一个旋律音输入...")
                 else:
-                    self.status_lbl.config(text=f"🎶 已接收第 {len(self.history)+1} 个旋律音，AI 引擎结合古典法则得出以下完美连接：")
+                    self.status_lbl.config(text=f"🎶 已接收第 {len(self.history)+1} 个旋律音，规则引擎通过连通性校验推荐以下连接：")
                     tgt_s = self.pending_melody_note
                     last_c = current_chord_name
                     last_v = current_item["voices"]
@@ -373,14 +376,14 @@ class HarmonyApp:
                                 break 
                     
                     if not next_chords:
-                        self.status_lbl.config(text=f"⚠️ 无法连接：此旋律音会导致平行五度、声部交叉或极度跳进，已被 AI 拦截。请更换旋律音！", fg="#E74C3C")
+                        self.status_lbl.config(text=f"⚠️ 连接失败：该旋律音将导致平行五八度、声部交叉或不规则跳进，已被规则引擎拦截。", fg="#E74C3C")
             else:
                 raw_next_chords = self.active_dna_db.get(current_chord_name, {}).get("next", [])
                 if not raw_next_chords:
-                    tk.Label(self.main_split_frame, text="已到达终止线", bg="#F8F9FA", font=("Microsoft YaHei", 12)).pack()
+                    tk.Label(self.main_split_frame, text="终止线校验通过", bg="#F8F9FA", font=("Microsoft YaHei", 12)).pack()
                     return
                 
-                self.status_lbl.config(text="⚡ AI 瞬间完成防断链过滤，备选100%连通：", fg="#2C3E50")
+                self.status_lbl.config(text="⚡ 系统已完成通路连通性验证，当前备选和弦可确保合法步进：", fg="#2C3E50")
                 self.root.update_idletasks()
                 
                 valid_next_chords = []
@@ -401,12 +404,12 @@ class HarmonyApp:
                 next_chords = valid_next_chords
                 
                 if not next_chords:
-                    self.status_lbl.config(text="⚠️ 警告：当前和声走向已死，无论接什么都会违背古典法则，请撤销！", fg="#E74C3C")
+                    self.status_lbl.config(text="⚠️ 连通性异常：当前和声路径已无可用节点，请回溯历史状态。", fg="#E74C3C")
 
-        # 🌟 应用 1 : 0.618 黄金分割比例 (Grid布局)
-        self.main_split_frame.columnconfigure(0, weight=1000, uniform="golden")  # 左侧权重 1
-        self.main_split_frame.columnconfigure(1, weight=0)     # 分隔线不占权重
-        self.main_split_frame.columnconfigure(2, weight=618, uniform="golden")   # 右侧权重 0.618
+        # 布局排版分割
+        self.main_split_frame.columnconfigure(0, weight=1000, uniform="golden")  
+        self.main_split_frame.columnconfigure(1, weight=0)     
+        self.main_split_frame.columnconfigure(2, weight=618, uniform="golden")   
 
         left_panel = tk.Frame(self.main_split_frame, bg="#F8F9FA")
         left_panel.grid(row=0, column=0, sticky="nsew")
@@ -422,7 +425,7 @@ class HarmonyApp:
         for chord in next_chords:
             if "/" in chord:
                 target_deg = chord.split("/")[1]
-                cat_name = f"离调至 {target_deg} 级"
+                cat_name = f"副属和弦结构 (至 {target_deg} 级)"
                 if cat_name not in tonicization_cats: tonicization_cats[cat_name] = []
                 tonicization_cats[cat_name].append(chord)
             else:
@@ -537,7 +540,7 @@ class HarmonyApp:
         if global_path is None: 
             tk.messagebox.showwarning(
                 "和声法则阻断", 
-                f"引擎拦截：由于你前置和弦的声部排列限制，强行连接 {target_chord_name} 会导致严重的违规（如平行五八度、声部交叉或音符重复错误）！\n\n该通路已被封锁，请尝试其他和弦或撤销上一步。"
+                f"引擎拦截：前置和弦声部约束导致强行连接 {target_chord_name} 会产生违规行为（如平行五八度、声部交叉或错误重复音）。\n\n该路径已被系统封锁，请重新规划和声。"
             )
             return
 
@@ -593,8 +596,11 @@ class HarmonyApp:
         self.root.after(16, self.poll_playhead)
 
 def show_dp_debugger_window(target_melody, history, dna_db, key_info):
+    """
+    动态规划状态监控控制台，用于调试 DAG 在高音序列配和声时的断链节点
+    """
     debug_win = tk.Toplevel()
-    debug_win.title("☠️ DP 断链诊断控制台")
+    debug_win.title("🔍 连通性诊断控制台")
     debug_win.geometry("700x600")
     text_area = tk.Text(debug_win, font=("Consolas", 10), bg="#1E1E1E", fg="#D4D4D4")
     text_area.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
@@ -603,9 +609,9 @@ def show_dp_debugger_window(target_melody, history, dna_db, key_info):
         text_area.see(tk.END)
         text_area.update()
     
-    log("=== 启动斯波索宾 DP 探针 ===", "#569CD6")
+    log("=== 启动 DAG 连通性诊断探针 ===", "#569CD6")
     log(f"调性: {key_info['type']} / 根音偏移: {key_info['shift']}")
-    log(f"目标旋律序列 (MIDI): {target_melody}")
+    log(f"目标序列 (MIDI): {target_melody}")
     log("-" * 50)
     
     from engine import get_chord_candidates, v_to_tuple, tuple_to_v
@@ -617,12 +623,12 @@ def show_dp_debugger_window(target_melody, history, dna_db, key_info):
         start_chord = "T" if key_info["type"] == "MAJOR" else "t"
         cands = get_chord_candidates(start_chord, dna_db, target_melody[0])
         for v in cands: current_layer[(start_chord, v_to_tuple(v))] = {start_chord}
-        log(f"[音符 0] 旋律={target_melody[0]}, 初始 '{start_chord}' 状态存活数: {len(current_layer)}")
+        log(f"[节点 0] 目标 MIDI={target_melody[0]}, 初始 '{start_chord}' 合法状态数: {len(current_layer)}")
     else:
         last_h = history[-1]
         start_index = len(history)
         current_layer[(last_h["chord"], v_to_tuple(last_h["voices"]))] = {last_h["chord"]}
-        log(f"基于已有历史记录，从第 {start_index} 个音开始推演...")
+        log(f"基于已有状态集，从第 {start_index} 个节点继续推演...")
 
     for i in range(start_index + 1 if history else 1, len(target_melody)):
         next_layer = {}
@@ -644,17 +650,17 @@ def show_dp_debugger_window(target_melody, history, dna_db, key_info):
                     if evaluate_voicing(tuple_to_v(v_tup), nxt_v, c_name, nxt_chord, key_info) < 999999: 
                         next_layer[(nxt_chord, v_to_tuple(nxt_v))] = True
                         
-        log(f"[音符 {i}] 旋律MIDI={tgt_s}, 存活的合法连接数: {len(next_layer)}")
+        log(f"[节点 {i}] 目标 MIDI={tgt_s}, 存活的合法连接状态数: {len(next_layer)}")
         
         if not next_layer:
             log("-" * 50)
-            log(f"❌ 致命断链发生！", "#F44336")
-            log(f"断链位置: 第 {i} 个音 (旋律MIDI: {tgt_s})")
-            log(f"上一个音符 (MIDI: {target_melody[i-1]}) 时，幸存的和弦有：")
+            log(f"❌ 连通性异常：路径已断开", "#F44336")
+            log(f"中断点: 节点 {i} (目标 MIDI: {tgt_s})")
+            log(f"在上一个节点 (MIDI: {target_melody[i-1]}) 时，可用的合法配置包含：")
             
             surviving_chords = {}
             for c_name, _ in current_layer.keys(): surviving_chords[c_name] = surviving_chords.get(c_name, 0) + 1
-            for c, count in surviving_chords.items(): log(f" - {c}: {count} 种声部排列法")
+            for c, count in surviving_chords.items(): log(f" - {c}: {count} 个有效声部排列")
             break
         current_layer = next_layer
 

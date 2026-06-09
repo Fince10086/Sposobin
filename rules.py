@@ -2,15 +2,20 @@
 from tonality import spell_midi
 
 def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name, key_info):
+    """
+    计算两个和弦排列之间的进行成本 (Penalty)。
+    当违背核心和声准则（如平行五八度、不规则跳进）时，返回 999999 以实现硬性阻断。
+    """
     new_S, new_A, new_T, new_B = new_voices['S'], new_voices['A'], new_voices['T'], new_voices['B']
     
-    # 🌟 核心升级：如果在“旋律写作模式”下，取消四大声部的绝对音域红线！
+    # 音域约束：在旋律写作模式外，对四个声部进行严格的音域检查
     if key_info.get("app_mode") != "COMPOSE":
         if not (60 <= new_S <= 81): return 999999  
         if not (55 <= new_A <= 74): return 999999  
         if not (48 <= new_T <= 67): return 999999  
         if not (36 <= new_B <= 62): return 999999  
 
+    # 声部间距约束 (Spacing)
     if not (new_S >= new_A and new_A >= new_T and new_T > new_B): return 999999
     if (new_S - new_A) > 12 or (new_A - new_T) > 12: return 999999
 
@@ -18,15 +23,16 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
     new_pcs_set = set(new_voices[v] % 12 for v in ['S', 'A', 'T', 'B'])
     is_same_chord = len(old_pcs_set.intersection(new_pcs_set)) >= 3
 
+    # 声部交叉检查 (Voice Crossing)
     voice_overlap_penalty = 0
     if not is_same_chord:
-        # 🌟 修复：声部超越降级为极重罚分 (5000)，防止在死胡同里彻底断链
         if new_S < old_voices['A']: voice_overlap_penalty += 5000
         if new_A > old_voices['S'] or new_A < old_voices['T']: voice_overlap_penalty += 5000
         if new_T > old_voices['A'] or new_T < old_voices['B']: voice_overlap_penalty += 5000
         if new_B > old_voices['T']: voice_overlap_penalty += 5000
-        if voice_overlap_penalty >= 10000: return 999999 # 多重超越直接死刑
+        if voice_overlap_penalty >= 10000: return 999999
 
+    # 同向进行检查 (Similar Motion)
     directions = []
     for v in ['S', 'A', 'T', 'B']:
         diff = new_voices[v] - old_voices[v]
@@ -37,6 +43,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
         if all(d == 1 for d in directions) or all(d == -1 for d in directions):
             all_same_dir_penalty = 3000 
 
+    # 低音进行检查 (Bass Motion)
     bass_diff = new_B - old_voices['B']
     bass_leap = abs(bass_diff)
     bass_penalty = 0
@@ -47,11 +54,13 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
     elif bass_leap in [8, 9]: bass_penalty += 50   
     else: bass_penalty += bass_leap * 0.5 
 
+    # 上声部跳进规则 (Melodic Leaps)
     leap_S = abs(new_S - old_voices['S'])
     leap_A = abs(new_A - old_voices['A'])
     leap_T = abs(new_T - old_voices['T'])
     forbidden_leaps = {10, 11}
     
+    # 属到主和弦时，旋律音允许四度或五度跳进解决的特殊情况
     is_amnesty_S = False
     if last_chord_name in ["D₃₄", "D₅₆", "D₇", "D⁶", "DD₃₄♭⁵", "DD₂♭⁵", "DD₅₆♭⁵", "DD₇♭⁵", "D₇不完全"] and target_chord_name in ["T", "T不完全", "D", "D₇", "K₆₄", "t", "t不完全"]:
         if leap_S in [5, 7, 0]: is_amnesty_S = True 
@@ -64,11 +73,11 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
     old_spells = {v: spell_midi(old_voices[v], key_info, last_chord_name) for v in ['S', 'A', 'T', 'B']}
     new_spells = {v: spell_midi(new_voices[v], key_info, target_chord_name) for v in ['S', 'A', 'T', 'B']}
 
-    # 🌟 规则扩展 1：增六和弦（It⁺⁶, Fr⁺⁶, Ger⁺⁶）的绝对解决红线
+    # 增六和弦 (Augmented Sixth Chords) 的特性解决规则：增六度需向外扩张至纯八度
     if last_chord_name.startswith(("It⁺⁶", "Ger⁺⁶", "Fr⁺⁶")):
-        b6_step = (key_info["root_step"] + 5) % 7   # 降6级音
-        sharp4_step = (key_info["root_step"] + 3) % 7 # 升4级音
-        dom_step = (key_info["root_step"] + 4) % 7    # 属音(5级)
+        b6_step = (key_info["root_step"] + 5) % 7
+        sharp4_step = (key_info["root_step"] + 3) % 7 
+        dom_step = (key_info["root_step"] + 4) % 7    
 
         for v in ['S', 'A', 'T', 'B']:
             _, old_step, _, _ = old_spells[v]
@@ -79,7 +88,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
                 _, new_step, _, _ = new_spells[v]
                 if new_step != dom_step or (new_voices[v] - old_voices[v] != 1): return 999999
 
-    # 🌟 规则扩展 2：那不勒斯六和弦（N₆）的特性解决红线
+    # 那不勒斯六和弦 (Neapolitan Sixth, N₆) 解决特性：降二级音必须下行解决到导音或主音
     if last_chord_name == "N₆" and target_chord_name in ["D", "D₇", "D₇不完全", "D₆", "K₆₄"]:
         flat2_step = (key_info["root_step"] + 1) % 7 
         lead_step = (key_info["root_step"] + 6) % 7  
@@ -92,16 +101,17 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
                 if new_step not in [lead_step, tonic_step]: return 999999
                 if new_voices[v] >= old_voices[v]: return 999999
 
-    # 🌟 规则扩展 3：辅助四六和弦（S₆₄ / s₆₄）的严格低音保持（Pedal Point）
+    # 辅助四六和弦 (Neighboring 6/4 Chords) 低音持续音要求
     if target_chord_name in ["S₆₄", "s₆₄"] or last_chord_name in ["S₆₄", "s₆₄"]:
         if bass_leap != 0: return 999999
 
-    # 🌟 规则扩展 4：经过四六和弦（D₆₄ / T₆₄ / t₆₄）的严格低音级进（Stepwise Passing）
+    # 经过四六和弦 (Passing 6/4 Chords) 低音必须保持级进
     if target_chord_name in ["D₆₄", "T₆₄", "t₆₄"]:
         if bass_leap not in [1, 2]: return 999999
     if last_chord_name in ["D₆₄", "T₆₄", "t₆₄"]:
         if bass_leap not in [1, 2]: return 999999
 
+    # 导音解决规则
     if last_chord_name in ["D₇", "D₅₆", "D₃₄", "D₂", "D₇不完全"] and target_chord_name in ["T", "T不完全", "T₆", "t", "t不完全", "t₆", "VI", "VI₆"]:
         for v in ['S', 'A', 'T', 'B']:
             _, old_step, _, _ = old_spells[v]
@@ -118,6 +128,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
                     continue
                 if new_step != key_info["root_step"]: return 999999
 
+    # K64 终止四六和弦的预备法则
     if last_chord_name == "K₆₄" and target_chord_name in ["D", "D₆", "D₇", "D₅₆", "D₃₄", "D₂", "D₉", "D₉♭"]:
         for v in ['S', 'A', 'T']:
             _, old_step, _, _ = old_spells[v]
@@ -143,6 +154,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
             dd_third = (root_pc + 6) % 12
             if old_voices[v] % 12 == t_third and new_voices[v] % 12 == dd_third: return 999999
 
+    # 对斜检查 (False Relation)
     false_relation_penalty = 0
     for step in range(7):
         old_alts = {v: old_spells[v][2] for v in ['S', 'A', 'T', 'B'] if old_spells[v][1] == step}
@@ -153,7 +165,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
                     if v2 not in old_alts or old_alts[v2] != alt1:
                         false_relation_penalty += 2000 
 
-    # 🌟 修复：反向五八度盲区与平行检查重构
+    # 核心禁忌：平行五度与平行八度检查 (Parallel Fifths & Octaves)
     parallel_penalty = 0
     voice_names = ['S', 'A', 'T', 'B']
     for i in range(len(voice_names)):
@@ -179,8 +191,9 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
                     
             if old_interval == 7 and new_interval == 7:
                 if is_parallel_motion:
+                    # 莫扎特五度豁免 (Mozart Fifths Exception)
                     if "Ger" in last_chord_name and target_chord_name in ["D", "D₆", "D₇", "D₇不完全"]:
-                        pass # 莫扎特五度豁免
+                        pass 
                     else:
                         parallel_penalty += 10000
                 elif is_contrary_motion:
@@ -189,12 +202,13 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
             if is_parallel_motion and old_interval == 6 and new_interval == 7: parallel_penalty += 2000 
                 
             if v1 == 'S' and v2 == 'B':
+                # 隐伏八度与隐伏五度 (Hidden Octaves and Fifths)
                 if new_interval == 0 or new_interval == 7:
                     if is_parallel_motion and abs(n1 - o1) >= 3: parallel_penalty += 10000
                             
     if parallel_penalty >= 5000: return 999999
 
-    # 🌟 新增：同度惩罚 (Unison Penalty)
+    # 同度结构检查 (Unison Configuration)
     unison_penalty = 0
     if new_S == new_A: unison_penalty += 20
     if new_A == new_T: unison_penalty += 15
@@ -204,6 +218,7 @@ def evaluate_voicing(old_voices, new_voices, last_chord_name, target_chord_name,
         if "ᵥᵢᵢ" in target_chord_name or "⁺⁶" in target_chord_name or "DD" in target_chord_name:
             unison_penalty *= 4
 
+    # 旋律跳进与平稳性评估
     melody_penalty = 0
     if is_amnesty_S: melody_penalty = 0
     elif leap_S == 0:
