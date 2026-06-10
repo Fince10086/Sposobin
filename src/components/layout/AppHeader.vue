@@ -62,7 +62,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.02em;
@@ -73,7 +73,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 0.6875rem;
+  font-size: 0.8rem;
   line-height: 1.4;
 }
 

@@ -31,7 +31,7 @@
               v-for="c in chords" 
               :key="c" 
               @click="$emit('select-chord', c)" 
-              class="chord-btn tonic"
+              :class="['chord-btn', 'tonic', { 'secondary-dominant': title.includes('级副属和弦') }]"
             >
               {{ c }}
             </button>
@@ -135,13 +135,13 @@ defineEmits(['select-chord']);
 .chord-btn {
   color: #000;
   cursor: pointer;
-  background: #fff;
-  border: 2px solid #000;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 4px 6px;
+  font-size: 1rem;
+  font-weight: normal;
+  font-family: 'LCBSposobin', 'Outfit', sans-serif;
   transition: background .15s;
   line-height: 1;
 }
@@ -151,12 +151,15 @@ defineEmits(['select-chord']);
 }
 
 .chord-btn.tonic {
-  border-color: #333;
   color: #333;
 }
 
 .chord-btn.tonic:hover {
   background: #f5f5f5;
+}
+
+.chord-btn.secondary-dominant {
+  font-size: 1.5rem;
 }
 
 /* thin scrollbar */
