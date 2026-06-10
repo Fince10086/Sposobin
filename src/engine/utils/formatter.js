@@ -13,12 +13,17 @@
 /**
  * 格式化和弦名称为显示字符串
  * @param {string} name - 内部和弦标识符
- * @returns {string} 格式化后的显示名称
+ * @returns {string|Object} 格式化后的显示名称，若含汉字后缀则返回 {base, sup}
  *
  * 当前使用 LCBSposobin 字体自动处理角标显示，
  * 不需要额外的 Unicode 下标转换。
  */
 export function format_chord_name(name) {
+  // 匹配尾部汉字后缀（如 "不完全"、"双三"、"阻碍"）
+  const match = name.match(/^(.+?)([\u4e00-\u9fa5_][\u4e00-\u9fa5_]*)$/);
+  if (match) {
+    return { base: match[1], sup: match[2].replace(/_/g, '') };
+  }
   return name;
 }
 
