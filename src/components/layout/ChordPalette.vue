@@ -67,8 +67,8 @@ defineEmits(['select-chord']);
 
 <style scoped>
 .chord-panel {
-  border: 2px solid #000;
-  border-radius: 4px;
+  border-left: 2px solid #ccc;
+  border-radius: 0;
   background: #fff;
   padding: 12px;
   max-height: calc(100dvh - 140px);
