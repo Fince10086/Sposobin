@@ -1,6 +1,6 @@
 <template>
   <section class="piano-section">
-    <div class="piano-wrapper">
+    <div class="piano-wrapper" ref="wrapperRef">
       <div class="piano">
         <div 
           v-for="note in pianoKeys" 
@@ -17,12 +17,24 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
 import { store } from '../../engine/store.js';
 import { usePiano } from '../../composables/usePiano.js';
 
 const { keys: pianoKeys } = usePiano();
+const wrapperRef = ref(null);
 
 const emit = defineEmits(['piano-click']);
+
+onMounted(() => {
+  if (window.innerWidth < 650 && wrapperRef.value) {
+    const wrapper = wrapperRef.value;
+    const piano = wrapper.querySelector('.piano');
+    if (piano) {
+      wrapper.scrollLeft = (piano.offsetWidth - wrapper.clientWidth) / 2;
+    }
+  }
+});
 
 function isKeyDisabled(midi) {
   // FREE 模式全部禁用

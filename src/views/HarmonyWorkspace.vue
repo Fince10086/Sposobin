@@ -61,6 +61,16 @@
       @close="closeAboutModal" 
     />
     <DebugTerminal @close="store.debug_message = null" />
+
+    <div class="mobile-footer">
+      <div class="author-line">
+        <span class="author-label">作者：</span>
+        <a href="https://space.bilibili.com/381857406" target="_blank" class="author-link">青槐树的诗</a>
+        <a href="https://space.bilibili.com/5915081" target="_blank" class="author-link">肥皂Fince</a>
+      </div>
+      <a href="https://github.com/Fince10086/Sposobin" target="_blank" class="author-link">Github</a>
+      <span class="author-text">QQ群：850900762</span>
+    </div>
   </div>
 </template>
 
@@ -256,5 +266,70 @@ onMounted(() => {
 .toolbar-actions .btn.btn-help {
   padding: 6px 10px;
   font-weight: 700;
+}
+
+/* Mobile portrait mode */
+@media (max-width: 649px) {
+  .workspace {
+    padding: 12px;
+  }
+
+  .main-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .left-area,
+  .right-area {
+    flex: none;
+    width: 100%;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .right-area .chord-panel {
+    border-left: none;
+    border-top: 2px solid #ccc;
+    height: auto;
+    max-height: none;
+  }
+
+  .mobile-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #ccc;
+    font-size: 0.75rem;
+    color: #666;
+  }
+
+  .mobile-footer .author-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .mobile-footer .author-link {
+    color: #000;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .mobile-footer .author-label,
+  .mobile-footer .author-text {
+    color: #666;
+  }
+}
+
+/* Desktop: hide mobile footer */
+@media (min-width: 650px) {
+  .mobile-footer {
+    display: none;
+  }
 }
 </style>

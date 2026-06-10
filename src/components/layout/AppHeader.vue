@@ -151,4 +151,31 @@ h1 {
   cursor: not-allowed;
   background: #f5f5f5;
 }
+
+@media (max-width: 649px) {
+  .app-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-left {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .app-header,
+  .app-header * {
+    white-space: nowrap;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    align-items: center;
+  }
+
+  .author-info {
+    display: none;
+  }
+}
 </style>
