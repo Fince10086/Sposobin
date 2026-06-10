@@ -16,7 +16,12 @@
               @click="$emit('select-chord', c)" 
               class="chord-btn"
             >
-              {{ c }}
+              <template v-if="typeof fmt(c) === 'object'">
+                {{ fmt(c).base }}<span class="chord-sup">{{ fmt(c).sup }}</span>
+              </template>
+              <template v-else>
+                {{ fmt(c) }}
+              </template>
             </button>
           </div>
         </div>
@@ -33,7 +38,12 @@
               @click="$emit('select-chord', c)" 
               :class="['chord-btn', 'tonic', { 'secondary-dominant': title.includes('级副属和弦') }]"
             >
-              {{ c }}
+              <template v-if="typeof fmt(c) === 'object'">
+                {{ fmt(c).base }}<span class="chord-sup">{{ fmt(c).sup }}</span>
+              </template>
+              <template v-else>
+                {{ fmt(c) }}
+              </template>
             </button>
           </div>
         </div>
@@ -45,6 +55,11 @@
 <script setup>
 import { computed } from 'vue';
 import { store } from '../../engine/store.js';
+import { format_chord_name } from '../../engine/utils/formatter.js';
+
+function fmt(c) {
+  return format_chord_name(c);
+}
 
 const isEmpty = computed(() =>
   Object.keys(store.categories.diatonic).length === 0 &&
@@ -160,6 +175,12 @@ defineEmits(['select-chord']);
 
 .chord-btn.secondary-dominant {
   font-size: 1.5rem;
+}
+
+.chord-sup {
+  font-size: 0.65em;
+  vertical-align: super;
+  margin-left: 1px;
 }
 
 /* thin scrollbar */

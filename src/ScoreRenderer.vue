@@ -50,7 +50,15 @@
         <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="250" rx="8" class="hover-bg" />
         <!-- 和弦名称：显示在谱表下方（如 T、D7、SII 等） -->
         <text v-if="node.type === 'history'" x="0" y="260" text-anchor="middle" font-weight="normal" 
-              font-family="'LCBSposobin'" font-size="22" fill="#000">{{ node.chord_display }}</text>
+              font-family="'LCBSposobin'" font-size="22" fill="#000">
+          <template v-if="typeof node.chord_display === 'object'">
+            <tspan>{{ node.chord_display.base }}</tspan>
+            <tspan font-size="14" dy="-8" dx="2">{{ node.chord_display.sup }}</tspan>
+          </template>
+          <template v-else>
+            {{ node.chord_display }}
+          </template>
+        </text>
         
         <!-- 四声部音符：S(女高)、A(女低)、T(男高)、B(男低) -->
         <g v-for="note in node.notes" :key="note.v">
