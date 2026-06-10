@@ -21,25 +21,25 @@
                 {{ isPlaying ? '停止' : '试听' }}
               </button>
               <button @click="handleReset" class="btn">清空</button>
+              <template v-if="store.mode === 'SOPRANO'">
+                <button 
+                  @click="handleUndoNote" 
+                  class="btn btn-undo"
+                  :disabled="store.target_melody.length === 0 || store.history.length > 0"
+                  title="撤销最后一个音"
+                >
+                  ←
+                </button>
+                <button 
+                  @click="handleStartSoprano" 
+                  class="btn btn-generate"
+                  :disabled="store.target_melody.length === 0"
+                >
+                  生成
+                </button>
+              </template>
+              <button @click="showAboutModal()" class="btn btn-help">?</button>
             </div>
-            <div v-if="store.mode === 'SOPRANO'" class="toolbar-actions soprano-actions">
-              <button 
-                @click="handleUndoNote" 
-                class="btn btn-undo"
-                :disabled="store.target_melody.length === 0 || store.history.length > 0"
-                title="撤销最后一个音"
-              >
-                ←
-              </button>
-              <button 
-                @click="handleStartSoprano" 
-                class="btn btn-generate"
-                :disabled="store.target_melody.length === 0"
-              >
-                生成
-              </button>
-            </div>
-            <button @click="showAboutModal()" class="btn btn-help">?</button>
           </div>
 
           <ScoreRenderer />
@@ -209,66 +209,47 @@ onMounted(() => {
   background: var(--hover);
 }
 
-.btn {
-  color: var(--fg);
+.toolbar-actions {
+  display: flex;
+  border: 2px solid #000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.toolbar-actions .btn {
+  color: #000;
   cursor: pointer;
   background: #fff;
-  border: 2px solid var(--border);
+  border: none;
+  border-right: 2px solid #000;
+  border-radius: 0;
   padding: 6px 12px;
   font-size: 0.875rem;
   font-weight: 600;
-  font-family: var(--font);
+  font-family: inherit;
   transition: background .15s, color .15s;
 }
 
-.btn:first-child {
-  border-radius: var(--radius) 0 0 var(--radius);
-  margin-right: -2px;
+.toolbar-actions .btn:last-child {
+  border-right: none;
 }
 
-.btn:last-child {
-  border-radius: 0 var(--radius) var(--radius) 0;
+.toolbar-actions .btn:hover:not(:disabled):not(.active) {
+  background: #f0f0f0;
 }
 
-.btn:only-child {
-  border-radius: var(--radius);
-  margin-right: 0;
-}
-
-.btn:hover:not(:disabled):not(.active) {
-  background: var(--hover);
-  position: relative;
-  z-index: 1;
-}
-
-.btn.active {
+.toolbar-actions .btn.active {
   color: #fff;
-  background: var(--fg);
+  background: #000;
 }
 
-.btn:disabled {
+.toolbar-actions .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.toolbar-actions .btn:first-child {
-  border-radius: var(--radius) 0 0 var(--radius);
-}
-
-.toolbar-actions .btn:last-child {
-  border-radius: 0 var(--radius) var(--radius) 0;
-}
-
-.btn-help {
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
+.toolbar-actions .btn.btn-help {
+  padding: 6px 10px;
   font-weight: 700;
-  margin-left: 8px;
 }
 </style>
