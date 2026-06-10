@@ -63,8 +63,6 @@ function handleClick(midi) {
 
 .piano-wrapper {
   background: #fff;
-  border: 2px solid #000;
-  border-radius: 4px;
   padding: 8px;
 }
 
@@ -84,7 +82,7 @@ function handleClick(midi) {
 }
 
 .piano-key.white {
-  width: 24px;
+  width: 26px;
   height: 100px;
   background: #fff;
   z-index: 1;
@@ -95,7 +93,7 @@ function handleClick(midi) {
 }
 
 .piano-key.black {
-  width: 14px;
+  width: 16px;
   height: 60px;
   background: #000;
   z-index: 2;
