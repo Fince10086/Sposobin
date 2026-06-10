@@ -73,7 +73,7 @@ function generate_render_data() {
       flat: {treble: [60,45,65,50,70,55,75], bass: [200,185,205,190,210,195,215]}
     };
     for (let i = 0; i < sig_count; i++) {
-      sigs.push({sym: sig_type === "sharp" ? "♯" : "♭", t_y: positions[sig_type].treble[i], b_y: positions[sig_type].bass[i]});
+      sigs.push({sym: sig_type === "sharp" ? "\uE262" : "\uE260", t_y: positions[sig_type].treble[i], b_y: positions[sig_type].bass[i]});
     }
   }
 
@@ -133,7 +133,7 @@ function generate_render_data() {
       let acc_x = 0;
       if (v_name in drawn_accidentals) {
         const [, abs_alt, acc_key] = drawn_accidentals[v_name];
-        const accMap = {"-2": "♭♭", "-1": "♭", "0": "♮", "1": "♯", "2": "x"};
+        const accMap = {"-2": "\uE264", "-1": "\uE260", "0": "\uE261", "1": "\uE262", "2": "\uE263"};
         acc_str = accMap[String(abs_alt)] || "";
         running_accidentals[acc_key] = abs_alt;
         acc_x = is_shifted ? -3 : -18;
