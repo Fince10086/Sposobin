@@ -33,7 +33,7 @@ import { calculateBestVoicing } from './core/viterbi.js';
 // ===== 响应式全局状态 =====
 export const store = reactive({
   mode: "FREE",                           // 默认工作模式: 自由探索
-  key_name: "C 大调 (C Major)",          // 默认调性: C大调
+  key_name: "C 大调",                   // 默认调性: C大调
   target_melody: [],                      // 目标旋律（高音题/写作模式）
   history: [],                            // 和声进行历史
   pending_note: null,                     // 待确认旋律音（写作模式）

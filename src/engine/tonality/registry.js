@@ -2,7 +2,7 @@
  * 调性注册表与转调/拼写处理模块
  *
  * 本模块提供完整的调性系统支持，包括:
- *   - KEY_REGISTRY: 24种大小调的注册表（12大调+12小调）
+ *   - KEY_REGISTRY: 26种大小调的注册表（13大调+13小调，含等音调）
  *   - KEY_SIG_POSITIONS: 调号在高/低音谱表上的SVG位置坐标
  *   - transpose_dna: DNA数据库转调函数（根据调性偏移量平移所有音高类）
  *   - spell_midi: MIDI音符的同音异名拼写算法（处理变音记号与等音转换）
@@ -16,32 +16,36 @@
  *   - root_step: 主音的调式音级索引（0-6）
  */
 
-/** 24大小调完整注册表（含等音调选择，如F#大调与Gb大调只保留其一） */
+/** 26大小调完整注册表（含等音调，如升F大调与降G大调并存） */
 export const KEY_REGISTRY = {
-  "C 大调 (C Major)":   {type: "MAJOR", shift: 0, sig_type: "none", sigs: 0, root_pc: 0, root_step: 0},
-  "G 大调 (G Major)":   {type: "MAJOR", shift: -5, sig_type: "sharp", sigs: 1, root_pc: 7, root_step: 4},
-  "D 大调 (D Major)":   {type: "MAJOR", shift: 2, sig_type: "sharp", sigs: 2, root_pc: 2, root_step: 1},
-  "A 大调 (A Major)":   {type: "MAJOR", shift: -3, sig_type: "sharp", sigs: 3, root_pc: 9, root_step: 5},
-  "E 大调 (E Major)":   {type: "MAJOR", shift: 4, sig_type: "sharp", sigs: 4, root_pc: 4, root_step: 2},
-  "B 大调 (B Major)":   {type: "MAJOR", shift: -1, sig_type: "sharp", sigs: 5, root_pc: 11, root_step: 6},
-  "F# 大调 (F# Major)": {type: "MAJOR", shift: 6, sig_type: "sharp", sigs: 6, root_pc: 6, root_step: 3},
-  "F 大调 (F Major)":   {type: "MAJOR", shift: 5, sig_type: "flat", sigs: 1, root_pc: 5, root_step: 3},
-  "Bb 大调 (Bb Major)": {type: "MAJOR", shift: -2, sig_type: "flat", sigs: 2, root_pc: 10, root_step: 6},
-  "Eb 大调 (Eb Major)": {type: "MAJOR", shift: 3, sig_type: "flat", sigs: 3, root_pc: 3, root_step: 2},
-  "Ab 大调 (Ab Major)": {type: "MAJOR", shift: -4, sig_type: "flat", sigs: 4, root_pc: 8, root_step: 5},
-  "Db 大调 (Db Major)": {type: "MAJOR", shift: 1, sig_type: "flat", sigs: 5, root_pc: 1, root_step: 1},
-  "c 小调 (c minor)":   {type: "MINOR", shift: 0, sig_type: "flat", sigs: 3, root_pc: 0, root_step: 0},
-  "g 小调 (g minor)":   {type: "MINOR", shift: -5, sig_type: "flat", sigs: 2, root_pc: 7, root_step: 4},
-  "d 小调 (d minor)":   {type: "MINOR", shift: 2, sig_type: "flat", sigs: 1, root_pc: 2, root_step: 1},
-  "a 小调 (a minor)":   {type: "MINOR", shift: -3, sig_type: "none", sigs: 0, root_pc: 9, root_step: 5},
-  "e 小调 (e minor)":   {type: "MINOR", shift: 4, sig_type: "sharp", sigs: 1, root_pc: 4, root_step: 2},
-  "b 小调 (b minor)":   {type: "MINOR", shift: -1, sig_type: "sharp", sigs: 2, root_pc: 11, root_step: 6},
-  "f# 小调 (f# minor)": {type: "MINOR", shift: 6, sig_type: "sharp", sigs: 3, root_pc: 6, root_step: 3},
-  "c# 小调 (c# minor)": {type: "MINOR", shift: 1, sig_type: "sharp", sigs: 4, root_pc: 1, root_step: 0},
-  "f 小调 (f minor)":   {type: "MINOR", shift: 5, sig_type: "flat", sigs: 4, root_pc: 5, root_step: 3},
-  "bb 小调 (bb minor)": {type: "MINOR", shift: -2, sig_type: "flat", sigs: 5, root_pc: 10, root_step: 6},
-  "eb 小调 (eb minor)": {type: "MINOR", shift: 3, sig_type: "flat", sigs: 6, root_pc: 3, root_step: 2},
-  "ab 小调 (ab minor)": {type: "MINOR", shift: -4, sig_type: "flat", sigs: 7, root_pc: 8, root_step: 5},
+  // === 大调（按半音顺序） ===
+  "C 大调":     {type: "MAJOR", shift: 0, sig_type: "none", sigs: 0, root_pc: 0, root_step: 0},
+  "降D 大调":   {type: "MAJOR", shift: 1, sig_type: "flat", sigs: 5, root_pc: 1, root_step: 1},
+  "D 大调":     {type: "MAJOR", shift: 2, sig_type: "sharp", sigs: 2, root_pc: 2, root_step: 1},
+  "降E 大调":   {type: "MAJOR", shift: 3, sig_type: "flat", sigs: 3, root_pc: 3, root_step: 2},
+  "E 大调":     {type: "MAJOR", shift: 4, sig_type: "sharp", sigs: 4, root_pc: 4, root_step: 2},
+  "F 大调":     {type: "MAJOR", shift: 5, sig_type: "flat", sigs: 1, root_pc: 5, root_step: 3},
+  "升F 大调":   {type: "MAJOR", shift: 6, sig_type: "sharp", sigs: 6, root_pc: 6, root_step: 3},
+  "降G 大调":   {type: "MAJOR", shift: 6, sig_type: "flat", sigs: 6, root_pc: 6, root_step: 4},
+  "G 大调":     {type: "MAJOR", shift: -5, sig_type: "sharp", sigs: 1, root_pc: 7, root_step: 4},
+  "降A 大调":   {type: "MAJOR", shift: -4, sig_type: "flat", sigs: 4, root_pc: 8, root_step: 5},
+  "A 大调":     {type: "MAJOR", shift: -3, sig_type: "sharp", sigs: 3, root_pc: 9, root_step: 5},
+  "降B 大调":   {type: "MAJOR", shift: -2, sig_type: "flat", sigs: 2, root_pc: 10, root_step: 6},
+  "B 大调":     {type: "MAJOR", shift: -1, sig_type: "sharp", sigs: 5, root_pc: 11, root_step: 6},
+
+  // === 小调（按半音顺序） ===
+  "a 小调":     {type: "MINOR", shift: -3, sig_type: "none", sigs: 0, root_pc: 9, root_step: 5},
+  "降b 小调":   {type: "MINOR", shift: -2, sig_type: "flat", sigs: 5, root_pc: 10, root_step: 6},
+  "b 小调":     {type: "MINOR", shift: -1, sig_type: "sharp", sigs: 2, root_pc: 11, root_step: 6},
+  "c 小调":     {type: "MINOR", shift: 0, sig_type: "flat", sigs: 3, root_pc: 0, root_step: 0},
+  "升c 小调":   {type: "MINOR", shift: 1, sig_type: "sharp", sigs: 4, root_pc: 1, root_step: 0},
+  "d 小调":     {type: "MINOR", shift: 2, sig_type: "flat", sigs: 1, root_pc: 2, root_step: 1},
+  "升d 小调":   {type: "MINOR", shift: 3, sig_type: "sharp", sigs: 6, root_pc: 3, root_step: 1},
+  "e 小调":     {type: "MINOR", shift: 4, sig_type: "sharp", sigs: 1, root_pc: 4, root_step: 2},
+  "f 小调":     {type: "MINOR", shift: 5, sig_type: "flat", sigs: 4, root_pc: 5, root_step: 3},
+  "升f 小调":   {type: "MINOR", shift: 6, sig_type: "sharp", sigs: 3, root_pc: 6, root_step: 3},
+  "g 小调":     {type: "MINOR", shift: -5, sig_type: "flat", sigs: 2, root_pc: 7, root_step: 4},
+  "升g 小调":   {type: "MINOR", shift: -4, sig_type: "sharp", sigs: 5, root_pc: 8, root_step: 4},
 };
 
 /**

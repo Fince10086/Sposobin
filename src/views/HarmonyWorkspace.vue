@@ -81,7 +81,17 @@ import DebugTerminal from '../components/display/DebugTerminal.vue';
 const { playSingleChord } = useAudio();
 const { startPlayback, resetPlayback, isPlaying } = usePlayback();
 
-const keys = Object.keys(KEY_REGISTRY);
+// 按半音顺序排列的调性列表（大调在前，小调在后）
+const keys = [
+  // 大调（按半音上行）
+  'C 大调', '降D 大调', 'D 大调', '降E 大调', 'E 大调',
+  'F 大调', '升F 大调', '降G 大调', 'G 大调', '降A 大调',
+  'A 大调', '降B 大调', 'B 大调',
+  // 小调（按半音上行）
+  'a 小调', '降b 小调', 'b 小调', 'c 小调', '升c 小调',
+  'd 小调', '升d 小调', 'e 小调', 'f 小调', '升f 小调',
+  'g 小调', '升g 小调',
+];
 
 const showAboutModalFlag = ref(false);
 
