@@ -1,13 +1,13 @@
 // store.js - Local state management replacing the Python backend
 
 import { reactive } from 'vue';
-import { MAJOR_DNA, MINOR_DNA } from './data.js';
-import { KEY_REGISTRY, transpose_dna } from './tonality.js';
-import { v_to_tuple, tuple_to_v, get_chord_siblings } from './utils.js';
-import { get_chord_candidates } from './candidates.js';
-import { evaluate_voicing } from './rules.js';
-import { build_full_dag, calculate_best_voicing } from './dag.js';
-import { categorize_chords } from './formatter.js';
+import { MAJOR_DNA, MINOR_DNA } from './data/index.js';
+import { KEY_REGISTRY, transpose_dna } from './tonality/index.js';
+import { v_to_tuple, tuple_to_v, get_chord_siblings, categorize_chords } from './utils/index.js';
+import { getChordCandidates } from './core/candidateEngine.js';
+import { evaluateVoicing } from './rules/index.js';
+import { buildFullDag } from './core/dagBuilder.js';
+import { calculateBestVoicing } from './core/viterbi.js';
 
 export const store = reactive({
   mode: "FREE",
@@ -39,7 +39,7 @@ function get_cached_dag(key_name, target_melody, active_dna_db, key_info) {
   if (!target_melody || target_melody.length === 0) return null;
   const cache_key = `${key_name}_${target_melody.join(",")}`;
   if (cache_key in GLOBAL_DAG_CACHE) return GLOBAL_DAG_CACHE[cache_key];
-  const dag = build_full_dag(target_melody, active_dna_db, key_info);
+  const dag = buildFullDag(target_melody, active_dna_db, key_info);
   if (Object.keys(GLOBAL_DAG_CACHE).length > 50) {
     delete GLOBAL_DAG_CACHE[Object.keys(GLOBAL_DAG_CACHE)[0]];
   }
@@ -92,14 +92,14 @@ export function sync_state(action_chord = null) {
       const tgt_s = store.pending_note;
       let valid_states = [];
       if (store.history.length === 0) {
-        for (const v of get_chord_candidates(target_chord, active_dna_db, tgt_s)) {
+        for (const v of getChordCandidates(target_chord, active_dna_db, tgt_s)) {
           valid_states.push([target_chord, v_to_tuple(v)]);
         }
       } else {
         const last_c = store.history[store.history.length - 1].chord;
         const last_v = store.history[store.history.length - 1].voices;
-        for (const nxt_v of get_chord_candidates(target_chord, active_dna_db, tgt_s)) {
-          if (evaluate_voicing(last_v, nxt_v, last_c, target_chord, key_info) < 999999) {
+        for (const nxt_v of getChordCandidates(target_chord, active_dna_db, tgt_s)) {
+          if (evaluateVoicing(last_v, nxt_v, last_c, target_chord, key_info) < 999999) {
             valid_states.push([target_chord, v_to_tuple(nxt_v)]);
           }
         }
@@ -113,7 +113,7 @@ export function sync_state(action_chord = null) {
       }
     } else if (store.mode === "FREE") {
       if (store.history.length === 0) {
-        const cands = get_chord_candidates(target_chord, active_dna_db, null);
+        const cands = getChordCandidates(target_chord, active_dna_db, null);
         if (cands.length > 0) {
           cands.sort((a, b) => score_initial(a, shift) - score_initial(b, shift));
           store.history.push({chord: target_chord, voices: cands[0]});
@@ -121,7 +121,7 @@ export function sync_state(action_chord = null) {
       } else {
         const chord_sequence = store.history.map(item => item.chord).concat(target_chord);
         const initial_voicing = store.history[0].voices;
-        const global_path = calculate_best_voicing(chord_sequence, initial_voicing, active_dna_db, key_info, null);
+        const global_path = calculateBestVoicing(chord_sequence, initial_voicing, active_dna_db, key_info, null);
         if (global_path) {
           store.history = chord_sequence.map((c, i) => ({chord: c, voices: global_path[i]}));
         }
@@ -148,7 +148,7 @@ export function sync_state(action_chord = null) {
       let start_index = 0;
       if (store.history.length === 0) {
         const start_chord = key_info.type === "MAJOR" ? "T" : "t";
-        const cands = get_chord_candidates(start_chord, active_dna_db, store.target_melody[0]);
+        const cands = getChordCandidates(start_chord, active_dna_db, store.target_melody[0]);
         for (const v of cands) {
           current_layer[`${start_chord}|${JSON.stringify(v_to_tuple(v))}`] = new Set([start_chord]);
         }
@@ -170,7 +170,7 @@ export function sync_state(action_chord = null) {
         }
         const cand_cache = {};
         for (const nxt_chord of all_possible_nexts) {
-          if (nxt_chord in active_dna_db) cand_cache[nxt_chord] = get_chord_candidates(nxt_chord, active_dna_db, tgt_s);
+          if (nxt_chord in active_dna_db) cand_cache[nxt_chord] = getChordCandidates(nxt_chord, active_dna_db, tgt_s);
         }
         for (const [state_key] of Object.entries(current_layer)) {
           const c_name = state_key.split("|")[0];
@@ -179,7 +179,7 @@ export function sync_state(action_chord = null) {
           for (const nxt_chord of possible_nexts) {
             if (!(nxt_chord in active_dna_db)) continue;
             for (const nxt_v of cand_cache[nxt_chord] || []) {
-              if (evaluate_voicing(tuple_to_v(v_tup), nxt_v, c_name, nxt_chord, key_info) < 999999) {
+              if (evaluateVoicing(tuple_to_v(v_tup), nxt_v, c_name, nxt_chord, key_info) < 999999) {
                 next_layer_local[`${nxt_chord}|${JSON.stringify(v_to_tuple(nxt_v))}`] = true;
               }
             }
@@ -219,7 +219,7 @@ export function sync_state(action_chord = null) {
   } else if (store.history.length === 0) {
     if (store.mode === "COMPOSE" && store.pending_note !== null) {
       for (const c_name of Object.keys(active_dna_db)) {
-        if (get_chord_candidates(c_name, active_dna_db, store.pending_note).length > 0) {
+        if (getChordCandidates(c_name, active_dna_db, store.pending_note).length > 0) {
           next_chords.push(c_name);
         }
       }
@@ -242,8 +242,8 @@ export function sync_state(action_chord = null) {
 
         for (const nxt_c of possible_nexts) {
           if (!(nxt_c in active_dna_db)) continue;
-          for (const nxt_v of get_chord_candidates(nxt_c, active_dna_db, store.pending_note)) {
-            if (evaluate_voicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999) {
+          for (const nxt_v of getChordCandidates(nxt_c, active_dna_db, store.pending_note)) {
+            if (evaluateVoicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999) {
               next_chords.push(nxt_c);
               break;
             }
@@ -262,8 +262,8 @@ export function sync_state(action_chord = null) {
 
       for (const nxt_c of possible_nexts) {
         if (!(nxt_c in active_dna_db)) continue;
-        for (const nxt_v of get_chord_candidates(nxt_c, active_dna_db, null)) {
-          if (evaluate_voicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999) {
+        for (const nxt_v of getChordCandidates(nxt_c, active_dna_db, null)) {
+          if (evaluateVoicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999) {
             next_chords.push(nxt_c);
             break;
           }

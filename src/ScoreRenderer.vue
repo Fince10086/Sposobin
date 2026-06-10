@@ -84,9 +84,9 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
 import { store, sync_state } from './engine/store.js';
-import { KEY_REGISTRY, spell_midi } from './engine/tonality.js';
-import { PITCH_Y } from './engine/data.js';
-import { format_chord_name } from './engine/formatter.js';
+import { KEY_REGISTRY, spell_midi } from './engine/tonality/index.js';
+import { PITCH_Y } from './engine/data/index.js';
+import { format_chord_name } from './engine/utils/formatter.js';
 
 // ============ 常量定义 ============
 /** 和弦横向间距：每个和弦占 85 像素 */
