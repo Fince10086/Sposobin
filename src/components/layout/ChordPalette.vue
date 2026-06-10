@@ -7,7 +7,7 @@
 
     <div v-else class="panel-content">
       <div v-if="hasDiatonic" class="panel-group">
-        <h4 class="group-title">自然音阶</h4>
+        <h4 class="group-title">自然音体系</h4>
         <div v-for="(chords, title) in store.categories.diatonic" :key="title" class="category">
           <div class="category-label">{{ title }}</div>
           <div class="chord-grid">
@@ -24,7 +24,7 @@
       </div>
 
       <div v-if="hasTonicization" class="panel-group">
-        <h4 class="group-title tonic">离调体系</h4>
+        <h4 class="group-title tonic">变化音体系</h4>
         <div v-for="(chords, title) in store.categories.tonicization" :key="title" class="category">
           <div class="category-label">{{ title }}</div>
           <div class="chord-grid">

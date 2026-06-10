@@ -3,69 +3,23 @@
     <div v-if="visible" class="modal-overlay" @click="$emit('close')">
       <div class="modal-window" @click.stop>
         <div class="modal-header">
-          <div class="modal-tabs">
+          <h2 class="modal-title">使用帮助</h2>
+          <div class="mode-selector">
             <button 
-              v-for="tab in tabs" 
-              :key="tab.key"
-              :class="['tab-btn', { active: activeTab === tab.key }]"
-              @click="activeTab = tab.key"
+              v-for="mode in modes" 
+              :key="mode.key"
+              :class="['mode-btn', { active: activeMode === mode.key }]"
+              @click="activeMode = mode.key"
             >
-              {{ tab.label }}
+              {{ mode.label }}
             </button>
           </div>
           <button class="close-btn" @click="$emit('close')">×</button>
         </div>
 
         <div class="modal-body">
-          <!-- 更新日志 -->
-          <div v-if="activeTab === 'update'" class="tab-content">
-            <div class="section">
-              <h4>平台概述</h4>
-              <p>将经典的<b>斯波索宾《和声学》</b>体系进行完全数字化代码化的智能推演工程。</p>
-            </div>
-            <div class="section">
-              <h4 class="highlight">1.1 Pro 更新内容</h4>
-              <ul>
-                <li>线性对位引擎重构：彻底修复经过与辅助和弦的底层逻辑</li>
-                <li>副功能与离调网络大扩充：全面实装副下属和弦体系</li>
-                <li>变音与特性和弦解锁：新增对属七和弦附加六音的支持</li>
-                <li>基础连通性修复：解决 S6 → D6 连接异常等缺陷</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- 使用帮助 -->
-          <div v-if="activeTab === 'help'" class="tab-content">
-            <div class="mode-selector">
-              <button 
-                v-for="mode in modes" 
-                :key="mode.key"
-                :class="['mode-btn', { active: activeMode === mode.key }]"
-                @click="activeMode = mode.key"
-              >
-                {{ mode.label }}
-              </button>
-            </div>
-            <div class="help-content">
-              <p v-for="(rule, idx) in currentRules" :key="idx">{{ rule }}</p>
-            </div>
-          </div>
-
-          <!-- 关于 -->
-          <div v-if="activeTab === 'about'" class="tab-content">
-            <div class="section">
-              <h4>斯波索宾和声引擎</h4>
-              <p>基于斯波索宾和声学理论的智能和声写作辅助工具。</p>
-            </div>
-            <div class="section">
-              <h4>作者</h4>
-              <p>青槐树的诗</p>
-              <div class="author-links">
-                <a href="https://space.bilibili.com/381857406" target="_blank">B站</a>
-                <a href="https://github.com/Huaishu61" target="_blank">GitHub</a>
-                <span>QQ群：850900762</span>
-              </div>
-            </div>
+          <div class="help-content">
+            <p v-for="(rule, idx) in currentRules" :key="idx">{{ rule }}</p>
           </div>
         </div>
       </div>
@@ -78,30 +32,18 @@ import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
   visible: Boolean,
-  initialTab: { type: String, default: 'help' },
   initialMode: { type: String, default: 'FREE' }
 });
 defineEmits(['close']);
 
-const activeTab = ref(props.initialTab);
 const activeMode = ref(props.initialMode);
-
-watch(() => props.initialTab, (newTab) => {
-  if (newTab) activeTab.value = newTab;
-});
 
 watch(() => props.initialMode, (newMode) => {
   if (newMode) activeMode.value = newMode;
 });
 
-const tabs = [
-  { key: 'help', label: '使用帮助' },
-  { key: 'update', label: '更新日志' },
-  { key: 'about', label: '关于' },
-];
-
 const modes = [
-  { key: 'FREE', label: '自由' },
+  { key: 'FREE', label: '自由模式' },
   { key: 'SOPRANO', label: '高音题' },
   { key: 'COMPOSE', label: '旋律写作' },
 ];
@@ -167,114 +109,17 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
   flex-shrink: 0;
 }
 
-.modal-tabs {
-  display: flex;
-  gap: 0;
-}
-
-.tab-btn {
-  padding: 5px 14px;
-  border: 2px solid #000;
-  background: #fff;
-  color: #000;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-}
-
-.tab-btn:first-child {
-  border-radius: 4px 0 0 4px;
-}
-
-.tab-btn:last-child {
-  border-radius: 0 4px 4px 0;
-}
-
-.tab-btn + .tab-btn {
-  margin-left: -2px;
-}
-
-.tab-btn:hover:not(.active) {
-  background: #f0f0f0;
-  position: relative;
-  z-index: 1;
-}
-
-.tab-btn.active {
-  background: #000;
-  color: #fff;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.5rem;
-  color: #000;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background .15s;
-}
-
-.close-btn:hover {
-  background: #f0f0f0;
-}
-
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.tab-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.section h4 {
-  margin: 0 0 8px 0;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: #000;
-}
-
-.section h4.highlight {
-  color: #333;
-}
-
-.section p {
+.modal-title {
   margin: 0;
-  font-size: 0.8125rem;
-  color: #333;
-  line-height: 1.6;
-}
-
-.section ul {
-  margin: 8px 0 0 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.section li {
-  font-size: 0.8125rem;
-  color: #333;
-  line-height: 1.5;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .mode-selector {
   display: flex;
   gap: 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ccc;
+  margin-left: 16px;
+  margin-right: auto;
 }
 
 .mode-btn {
@@ -312,6 +157,31 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
   color: #fff;
 }
 
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #000;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background .15s;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
 .help-content {
   display: flex;
   flex-direction: column;
@@ -323,24 +193,6 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
   line-height: 1.6;
   color: #333;
   margin: 0;
-}
-
-.author-links {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
-.author-links a,
-.author-links span {
-  font-size: 0.8125rem;
-  color: #000;
-  text-decoration: none;
-}
-
-.author-links a:hover {
-  text-decoration: underline;
 }
 
 .modal-enter-active, .modal-leave-active {

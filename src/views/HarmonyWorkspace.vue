@@ -2,8 +2,6 @@
   <div class="workspace">
     <AppHeader 
       @mode-change="handleModeChange" 
-      @show-about="showAboutModal('help')"
-      @show-update="showAboutModal('update')"
     />
 
     <div class="main-layout">
@@ -41,7 +39,7 @@
                 生成
               </button>
             </div>
-            <button @click="showAboutModal('help')" class="btn btn-help">?</button>
+            <button @click="showAboutModal()" class="btn btn-help">?</button>
           </div>
 
           <ScoreRenderer />
@@ -59,7 +57,6 @@
 
     <AboutModal 
       :visible="showAboutModalFlag" 
-      :initial-tab="aboutModalTab"
       :initial-mode="store.mode"
       @close="closeAboutModal" 
     />
@@ -87,10 +84,8 @@ const { startPlayback, resetPlayback, isPlaying } = usePlayback();
 const keys = Object.keys(KEY_REGISTRY);
 
 const showAboutModalFlag = ref(false);
-const aboutModalTab = ref('help');
 
-function showAboutModal(tab = 'help') {
-  aboutModalTab.value = tab;
+function showAboutModal() {
   showAboutModalFlag.value = true;
 }
 
@@ -144,10 +139,10 @@ function handleSelectChord(chord) {
 
 onMounted(() => {
   document.title = '斯波索宾和声引擎';
-  const hasSeenUpdate = localStorage.getItem('seenUpdateReport1.1');
-  if (!hasSeenUpdate) {
-    showAboutModal('update');
-    localStorage.setItem('seenUpdateReport1.1', 'true');
+  const hasSeenHelp = localStorage.getItem('seenHelp1.1');
+  if (!hasSeenHelp) {
+    showAboutModal();
+    localStorage.setItem('seenHelp1.1', 'true');
   }
   sync_state();
 });
