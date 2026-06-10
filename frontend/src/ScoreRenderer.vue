@@ -47,9 +47,9 @@
          @click="node.type === 'history' ? rewindTo(node.original_index) : null">
         
         <!-- 可点击背景区：仅历史和弦显示，支持点击回退 -->
-        <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="230" rx="8" class="hover-bg" />
-        <!-- 和弦名称：显示在音符上方（如 T、D7、SII 等） -->
-        <text v-if="node.type === 'history'" x="0" y="20" text-anchor="middle" font-weight="bold" 
+        <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="250" rx="8" class="hover-bg" />
+        <!-- 和弦名称：显示在谱表下方（如 T、D7、SII 等） -->
+        <text v-if="node.type === 'history'" x="0" y="240" text-anchor="middle" font-weight="bold" 
               font-family="Georgia, serif" font-size="18" fill="#E11D48">{{ node.chord_display }}</text>
         
         <!-- 四声部音符：S(女高)、A(女低)、T(男高)、B(男低) -->
