@@ -91,7 +91,7 @@
             <button class="close-help-btn" style="color: rgba(255,255,255,0.8);" @click="showDonateModal = false">✕</button>
           </div>
           <div class="help-body" style="text-align: center; gap: 16px;">
-            <p class="update-text" style="font-size: 15px;">服务器运行和 AI 接口调用都是一笔不小的开销。<br/>如果你觉得本项目有帮助，可以花 <b>1元</b> 请作者喝口水、给服务器续一天命！</p>
+            <p class="update-text" style="font-size: 15px;">“一块钱！一块钱————”</p>
             <div style="display: flex; justify-content: center; margin-top: 10px;">
               <div style="width: 200px; padding: 15px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
                 <h4 style="margin-bottom: 12px; color: #10B981; font-size: 16px;">微信赞赏</h4>
@@ -440,7 +440,7 @@ async function postIssueToBackend(sourceInfo) {
       target_melody: store.target_melody, history: store.history,
       source_info: sourceInfo
     };
-    const res = await fetch("http://127.0.0.1:8000/api/submit_issue", {
+    const res = await fetch("/api/submit_issue", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
@@ -549,7 +549,7 @@ async function syncBackend(action_chord = null) {
       target_melody: store.target_melody, history: store.history,
       pending_note: store.pending_note, action_chord: action_chord
     };
-    const res = await fetch("http://127.0.0.1:8000/api/sync_state", {
+    const res = await fetch("/api/sync_state", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
