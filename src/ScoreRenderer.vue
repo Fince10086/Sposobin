@@ -71,10 +71,7 @@
 
       <!-- 播放头：绿色虚线，标记当前播放位置或下一步输入位置 -->
       <g class="playhead-layer" v-if="store.history.length > 0 || store.target_melody.length > 0 || store.pending_note">
-        <!-- 竖线 -->
-        <line :x1="playheadX" y1="15" :x2="playheadX" y2="235" stroke="#000" stroke-width="2" stroke-dasharray="4,2" />
-        <!-- 三角形箭头 -->
-        <polygon :points="`${playheadX-6},15 ${playheadX+6},15 ${playheadX},25`" fill="#000" />
+        <rect :x="playheadX - 25" y="10" width="50" height="250" rx="8" fill="rgba(0, 0, 0, 0.04)" />
       </g>
     </svg>
   </div>
