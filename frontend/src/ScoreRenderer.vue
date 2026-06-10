@@ -1,48 +1,80 @@
 <template>
+  <!-- 乐谱渲染容器：包含横向滚动支持 -->
   <div class="score-container" ref="scoreContainerRef">
-    <svg :width="Math.max(900, renderData.nodes.length * 85 + 150)" height="270" class="score-svg">
-      <g class="staff-lines">
-        <line v-for="i in 5" :key="'t'+i" x1="50" :y1="30 + i*10" x2="100%" :y2="30 + i*10" stroke="#475569" stroke-width="1" />
-        <line v-for="i in 5" :key="'b'+i" x1="50" :y1="160 + i*10" x2="100%" :y2="160 + i*10" stroke="#475569" stroke-width="1" />
-      </g>
-
-      <!-- Vertical line connecting both staves on the left -->
-      <line x1="50" y1="40" x2="50" y2="210" stroke="#475569" stroke-width="2" />
-
-      <!-- Grand Staff Brace -->
-      <text x="40" y="210" font-size="170" fill="#475569" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">&#xE000;</text>
+    <!-- SVG 画布：宽度根据音符数量动态计算，最低 900px -->
+    <svg :width="Math.max(900, renderData.nodes.length * NOTE_SPACING + START_X + 60)" 
+         height="270" class="score-svg">
       
-      <text x="70" y="70" font-size="44" fill="#475569" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">&#xE050;</text>
-      <text x="70" y="180" font-size="40" fill="#475569" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">&#xE062;</text>
-
-      <g v-for="(sig, i) in renderData.sigs" :key="'sig'+i">
-        <text :x="95 + i * 12" :y="sig.t_y" :dy="getAccDy(sig.sym)" font-size="34" fill="#334155" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">{{ sig.sym }}</text>
-        <text :x="95 + i * 12" :y="sig.b_y" :dy="getAccDy(sig.sym)" font-size="34" fill="#334155" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">{{ sig.sym }}</text>
+      <!-- 谱线系统：高音谱表（5条）+ 低音谱表（5条） -->
+      <g class="staff-lines">
+        <!-- 高音谱表五线谱，Y 坐标从 TREBLE_TOP(30) 开始，每条间隔 10px -->
+        <line v-for="i in 5" :key="'t'+i" x1="50" :y1="STAFF.TREBLE_TOP + i*10" x2="100%" :y2="STAFF.TREBLE_TOP + i*10" 
+              :stroke="COLORS.STAFF" stroke-width="1" />
+        <!-- 低音谱表五线谱，Y 坐标从 BASS_TOP(160) 开始 -->
+        <line v-for="i in 5" :key="'b'+i" x1="50" :y1="STAFF.BASS_TOP + i*10" x2="100%" :y2="STAFF.BASS_TOP + i*10" 
+              :stroke="COLORS.STAFF" stroke-width="1" />
       </g>
 
+      <!-- 左侧竖线：连接高低音谱表，与大谱表左端对齐 -->
+      <line x1="50" :y1="STAFF.TREBLE_TOP + 10" x2="50" :y2="STAFF.BASS_TOP + 50" 
+            :stroke="COLORS.STAFF" stroke-width="1" />
+
+      <!-- 花括号（连谱号）：Bravura 字体 U+E000 -->
+      <text x="40" y="210" font-size="170" 
+            :fill="COLORS.STAFF" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">&#xE000;</text>
+      
+      <!-- 高音谱号（G 谱号）：Bravura U+E050 -->
+      <text x="70" y="70" font-size="44" :fill="COLORS.STAFF" font-family="'Bravura'" 
+            dominant-baseline="central" text-anchor="middle">&#xE050;</text>
+      <!-- 低音谱号（F 谱号）：Bravura U+E062 -->
+      <text x="70" y="180" font-size="40" :fill="COLORS.STAFF" font-family="'Bravura'" 
+            dominant-baseline="central" text-anchor="middle">&#xE062;</text>
+
+      <!-- 调号：根据当前调性显示升号或降号，上下谱表同步显示 -->
+      <g v-for="(sig, i) in keySignatures" :key="'sig'+i">
+        <!-- 高音谱表调号 -->
+        <text :x="95 + i * SIG_SPACING" :y="sig.t_y" :dy="getAccDy(sig.sym)" font-size="34" 
+              :fill="COLORS.ACCIDENTAL" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">{{ sig.sym }}</text>
+        <!-- 低音谱表调号 -->
+        <text :x="95 + i * SIG_SPACING" :y="sig.b_y" :dy="getAccDy(sig.sym)" font-size="34" 
+              :fill="COLORS.ACCIDENTAL" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">{{ sig.sym }}</text>
+      </g>
+
+      <!-- 音符节点：每个和弦一个节点，包含四声部音符 -->
       <g v-for="(node, index) in renderData.nodes" :key="index" 
-         :transform="`translate(${112 + (renderData.sigs.length * 14) + index * 85}, 0)`"
+         :transform="`translate(${START_X + keySignatures.length * SIG_SPACING + index * NOTE_SPACING}, 0)`"
          :class="{ 'clickable-node': node.type === 'history' }"
          @click="node.type === 'history' ? rewindTo(node.original_index) : null">
         
+        <!-- 可点击背景区：仅历史和弦显示，支持点击回退 -->
         <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="230" rx="8" class="hover-bg" />
-
-        <text v-if="node.type === 'history'" x="0" y="20" text-anchor="middle" font-weight="bold" font-family="Georgia, serif" font-size="18" fill="#E11D48">{{ node.chord_display }}</text>
+        <!-- 和弦名称：显示在音符上方（如 T、D7、SII 等） -->
+        <text v-if="node.type === 'history'" x="0" y="20" text-anchor="middle" font-weight="bold" 
+              font-family="Georgia, serif" font-size="18" fill="#E11D48">{{ node.chord_display }}</text>
         
+        <!-- 四声部音符：S(女高)、A(女低)、T(男高)、B(男低) -->
         <g v-for="note in node.notes" :key="note.v">
-          <text :x="note.x" :y="note.y" font-size="40" font-family="'Bravura'" text-anchor="middle" dominant-baseline="central"
+          <!-- 全音符符头：Bravura U+E0A2，空心椭圆 -->
+          <text :x="note.x" :y="note.y" font-size="40" font-family="'Bravura'" text-anchor="middle" 
+                dominant-baseline="central"
                 :fill="node.type === 'history' ? '#0F172A' : (node.type === 'pending' ? '#F59E0B' : 'transparent')"
                 :stroke="node.type === 'target' ? '#CBD5E1' : (node.type === 'pending' ? '#D97706' : 'none')"
                 :stroke-width="node.type === 'target' ? '1' : '0'"
-                :stroke-dasharray="node.type === 'target' ? '2,2' : 'none'"
-          >&#xE0A2;</text>
-          <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="24" fill="#0F172A" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
-          <line v-for="ly in note.ledgers" :key="ly" :x1="note.x - 15" :y1="ly" :x2="note.x + 15" :y2="ly" :stroke="node.type === 'target' ? '#CBD5E1' : '#0F172A'" stroke-width="1.5" />
+                :stroke-dasharray="node.type === 'target' ? '2,2' : 'none'">&#xE0A2;</text>
+          <!-- 临时升降号：与调号大小一致（font-size: 34） -->
+          <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="34" 
+                fill="#0F172A" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
+          <!-- 加线：音符超出谱表时绘制辅助短线 -->
+          <line v-for="ly in note.ledgers" :key="ly" :x1="note.x - 15" :y1="ly" :x2="note.x + 15" :y2="ly" 
+                :stroke="node.type === 'target' ? '#CBD5E1' : '#0F172A'" stroke-width="1.5" />
         </g>
       </g>
 
+      <!-- 播放头：绿色虚线，标记当前播放位置或下一步输入位置 -->
       <g class="playhead-layer" v-if="store.history.length > 0 || store.target_melody.length > 0 || store.pending_note">
+        <!-- 竖线 -->
         <line :x1="playheadX" y1="15" :x2="playheadX" y2="235" stroke="#10B981" stroke-width="2" stroke-dasharray="4,2" />
+        <!-- 三角形箭头 -->
         <polygon :points="`${playheadX-6},15 ${playheadX+6},15 ${playheadX},25`" fill="#10B981" />
       </g>
     </svg>
@@ -56,172 +88,292 @@ import { KEY_REGISTRY, spell_midi } from './engine/tonality.js';
 import { PITCH_Y } from './engine/data.js';
 import { format_chord_name } from './engine/formatter.js';
 
+// ============ 常量定义 ============
+/** 和弦横向间距：每个和弦占 85 像素 */
+const NOTE_SPACING = 85;
+/** 音符起始 X 坐标：谱号、调号之后的位置 */
+const START_X = 112;
+/** 调号间距：每个升降号间隔 14 像素 */
+const SIG_SPACING = 14;
+
+/** 谱表 Y 坐标配置 */
+const STAFF = {
+  /** 高音谱表顶部 Y 坐标（第一线） */
+  TREBLE_TOP: 30,
+  /** 低音谱表顶部 Y 坐标（第一线） */
+  BASS_TOP: 160,
+};
+
+/** 颜色配置 */
+const COLORS = {
+  /** 谱线、谱号、花括号颜色 */
+  STAFF: '#475569',
+  /** 调号、临时升降号颜色 */
+  ACCIDENTAL: '#334155',
+};
+
+/** 声部顺序：[声部名, 是否低音谱表] */
+const VOICE_ORDER = [['S', false], ['A', false], ['T', true], ['B', true]];
+
+/** 调号位置表：升/降号在高音/低音谱表上的 Y 坐标 */
+const SIG_POSITIONS = {
+  sharp: { treble: [40, 55, 35, 50, 65, 45, 60], bass: [180, 195, 175, 190, 205, 185, 200] },
+  flat: { treble: [60, 45, 65, 50, 70, 55, 75], bass: [200, 185, 205, 190, 210, 195, 215] },
+};
+
+/** 调号变音顺序：标准五度圈顺序，对应音级索引 */
+const KEY_SIG_ORDERS = {
+  /** 升号顺序：F(3), C(0), G(4), D(1), A(5), E(2), B(6) */
+  sharp: [3, 0, 4, 1, 5, 2, 6],
+  /** 降号顺序：B(6), E(2), A(5), D(1), G(4), C(0), F(3) */
+  flat: [6, 2, 5, 1, 4, 0, 3],
+};
+
+/** 临时变音记号映射：Bravura SMuFL 编码 */
+const ACC_MAP = { "-2": "\uE264", "-1": "\uE260", "0": "\uE261", "1": "\uE262", "2": "\uE263" };
+/** 调号符号映射 */
+const SIG_SYMBOLS = { sharp: "\uE262", flat: "\uE260" };
+
+// ============ 响应式引用 ============
+/** 乐谱容器 DOM 引用，用于滚动控制 */
 const scoreContainerRef = ref(null);
 
+// ============ 计算属性 ============
+/**
+ * 当前调性信息
+ * 从 KEY_REGISTRY 获取，并附加当前应用模式
+ */
 const keyInfo = computed(() => {
-  const ki = {...KEY_REGISTRY[store.key_name]};
+  const ki = { ...KEY_REGISTRY[store.key_name] };
   ki.app_mode = store.mode;
   return ki;
 });
 
-const renderData = computed(() => {
-  const key_info = keyInfo.value;
-  const history = store.history;
-  const target_melody = store.target_melody;
-  const pending_note = store.pending_note;
+/**
+ * 调号列表
+ * 根据当前调性的升降号数量和类型，生成调号渲染数据
+ * 每个调号包含：符号(sym)、高音谱表Y(t_y)、低音谱表Y(b_y)
+ */
+const keySignatures = computed(() => {
+  const { sigs: count, sig_type: type } = keyInfo.value;
+  if (count === 0 || type === 'none') return [];
+  const positions = SIG_POSITIONS[type];
+  const symbol = SIG_SYMBOLS[type];
+  return Array.from({ length: count }, (_, i) => ({
+    sym: symbol,
+    t_y: positions.treble[i],
+    b_y: positions.bass[i],
+  }));
+});
 
-  const render_nodes = [];
-  const sig_count = key_info.sigs;
-  const sig_type = key_info.sig_type;
-  const sigs = [];
-  
-  // Key signature positions
-  const positions = {
-    sharp: {treble: [40,55,35,50,65,45,60], bass: [180,195,175,190,205,185,200]},
-    flat: {treble: [60,45,65,50,70,55,75], bass: [200,185,205,190,210,195,215]}
-  };
-  
-  if (sig_count > 0 && sig_type !== "none") {
-    for (let i = 0; i < sig_count; i++) {
-      sigs.push({sym: sig_type === "sharp" ? "\uE262" : "\uE260", t_y: positions[sig_type].treble[i], b_y: positions[sig_type].bass[i]});
-    }
+/**
+ * 调号变音映射表
+ * 记录每个音级（0-6）被调号改变的音高偏移量：
+ * - 0: 无变化
+ * - 1: 升半音（升号调）
+ * - -1: 降半音（降号调）
+ */
+const keySigAlts = computed(() => {
+  const { sigs: count, sig_type: type } = keyInfo.value;
+  const alts = Array(7).fill(0);
+  if (type === 'sharp' || type === 'flat') {
+    const order = KEY_SIG_ORDERS[type];
+    for (let i = 0; i < count; i++) alts[order[i]] = type === 'sharp' ? 1 : -1;
   }
+  return alts;
+});
 
-  // Key signature alterations
-  const key_sig_alts = {};
-  for (let s = 0; s < 7; s++) key_sig_alts[s] = 0;
-  if (sig_type === "sharp") {
-    const order = [3,0,4,1,5,2,6];
-    for (let i = 0; i < sig_count; i++) key_sig_alts[order[i]] = 1;
-  } else if (sig_type === "flat") {
-    const order = [6,2,5,1,4,0,3];
-    for (let i = 0; i < sig_count; i++) key_sig_alts[order[i]] = -1;
-  }
+/**
+ * 历史和弦节点列表
+ * 遍历 store.history，为每个和弦生成渲染数据：
+ * 1. 使用 spell_midi 将 MIDI 转换为音符名、音级、变音、八度
+ * 2. 查表 PITCH_Y 获取 SVG Y 坐标
+ * 3. 检测小二度碰撞（同和弦内两音相差小二度时右移音符）
+ * 4. 对比调号/running_accidentals 决定是否需要临时变音记号
+ * 5. 计算加线（超出谱表的音符）
+ * 
+ * @returns {Array} 每个元素包含：type, chord_display, notes[], original_index
+ */
+const historyNodes = computed(() => {
+  const ki = keyInfo.value;
+  const alts = keySigAlts.value;
+  /** 跨小节运行的临时变音状态：key -> alteration，用于判断同一小节内后续同音名是否需要重复变音 */
+  const running = {};
 
-  // Running accidentals state (reset per re-computation, which is correct)
-  const running_accidentals = {};
+  return store.history.map((item, index) => {
+    const { chord, voices } = item;
+    const node = { type: 'history', chord_display: format_chord_name(chord), notes: [], original_index: index };
 
-  for (let index = 0; index < history.length; index++) {
-    const item = history[index];
-    const chord = item.chord;
-    const voices = item.voices;
-    const node = {type: "history", chord_display: format_chord_name(chord), notes: [], original_index: index};
+    // 第一步：拼写所有声部的音符信息
+    const spells = {};
+    VOICE_ORDER.forEach(([v, isBass]) => {
+      spells[v] = spell_midi(voices[v], ki, chord);
+    });
 
-    // Calculate Y positions for all voices
-    const y_positions = {};
-    for (const [v_name, is_bass] of [['S', false], ['A', false], ['T', true], ['B', true]]) {
-      const midi = voices[v_name];
-      const [letter, abs_step, abs_alt, octave] = spell_midi(midi, key_info, chord);
-      y_positions[v_name] = PITCH_Y[`${letter}${octave}${is_bass ? "_bass" : ""}`];
-    }
+    // 第二步：计算每个声部的 Y 坐标（查表 PITCH_Y）
+    const yPositions = {};
+    VOICE_ORDER.forEach(([v, isBass]) => {
+      const [letter, , , octave] = spells[v];
+      yPositions[v] = PITCH_Y[`${letter}${octave}${isBass ? '_bass' : ''}`];
+    });
 
-    // Determine which accidentals need to be drawn
-    const drawn_accidentals = {};
-    for (const [v_name, is_bass] of [['S', false], ['A', false], ['T', true], ['B', true]]) {
-      const midi = voices[v_name];
-      const [letter, abs_step, abs_alt, octave] = spell_midi(midi, key_info, chord);
-      const y = y_positions[v_name];
-      if (y == null) continue;
-      const staff = is_bass ? 1 : 0;
-      const acc_key = `${staff}_${octave}_${abs_step}`;
-      const curr_alt = running_accidentals[acc_key] !== undefined ? running_accidentals[acc_key] : key_sig_alts[abs_step];
-      if (abs_alt !== curr_alt) {
-        drawn_accidentals[v_name] = [y, abs_alt, acc_key];
-      }
-    }
+    // 第三步：确定哪些声部需要绘制临时变音记号
+    // 规则：当前变音 ≠ 调号变音 且 ≠ 本小节前面出现过的同音名变音
+    const drawnAcc = {};
+    VOICE_ORDER.forEach(([v, isBass]) => {
+      const [, step, alt] = spells[v];
+      const y = yPositions[v];
+      if (y == null) return;
+      // 键格式：谱表(0/1)_八度_音级
+      const key = `${isBass ? 1 : 0}_${spells[v][3]}_${step}`;
+      const curr = running[key] !== undefined ? running[key] : alts[step];
+      if (alt !== curr) drawnAcc[v] = { y, alt, key };
+    });
 
-    // Build note data
-    for (const [v_name, is_bass] of [['S', false], ['A', false], ['T', true], ['B', true]]) {
-      const y = y_positions[v_name];
-      if (y == null) continue;
+    // 第四步：构建每个声部的渲染数据
+    VOICE_ORDER.forEach(([v, isBass]) => {
+      const y = yPositions[v];
+      if (y == null) return;
 
-      let is_shifted = false;
-      for (const [other_voice, other_y] of Object.entries(y_positions)) {
-        if (other_y != null && other_voice !== v_name && other_y - y === 5) {
-          is_shifted = true;
-          break;
-        }
-      }
-      const note_x = is_shifted ? 13 : 0;
+      // 检测小二度碰撞：同和弦内两音相差小二度（Y 差 = 5px）时右移
+      const shifted = Object.entries(yPositions).some(
+        ([ov, oy]) => ov !== v && oy != null && oy - y === 5
+      );
+      const x = shifted ? 13 : 0;
 
-      let acc_str = "";
-      let acc_x = 0;
-      if (v_name in drawn_accidentals) {
-        const [, abs_alt, acc_key] = drawn_accidentals[v_name];
-        const accMap = {"-2": "\uE264", "-1": "\uE260", "0": "\uE261", "1": "\uE262", "2": "\uE263"};
-        acc_str = accMap[String(abs_alt)] || "";
-        running_accidentals[acc_key] = abs_alt;
-        acc_x = is_shifted ? -3 : -18;
-        const has_drawn_above = Object.entries(drawn_accidentals).some(([ov, [oy]]) => ov !== v_name && oy < y && y - oy <= 11);
-        if (!is_shifted && has_drawn_above) acc_x = -28;
-      }
-
-      const ledgers = [];
-      if (!is_bass) {
-        if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
-        if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
-      } else {
-        if (y <= 160) for (let ly = 160; ly >= y; ly -= 10) ledgers.push(ly);
-        if (y >= 220) for (let ly = 220; ly <= y; ly += 10) ledgers.push(ly);
+      // 计算临时变音记号的位置
+      let acc = '';
+      let accX = 0;
+      if (drawnAcc[v]) {
+        const { alt, key } = drawnAcc[v];
+        acc = ACC_MAP[String(alt)] || '';
+        running[key] = alt; // 更新本小节运行状态
+        // 默认偏移：右移音符时 -3，否则 -18
+        accX = shifted ? -3 : -18;
+        // 避让检测：如果上方有其他变音记号，额外左移避免重叠
+        const hasAbove = Object.entries(drawnAcc).some(
+          ([ov, o]) => ov !== v && o.y < y && y - o.y <= 11
+        );
+        if (!shifted && hasAbove) accX = -28;
       }
 
-      node.notes.push({v: v_name, y, x: note_x, acc: acc_str, acc_x, ledgers, is_bass});
-    }
-    render_nodes.push(node);
-  }
+      node.notes.push({ v, y, x, acc, acc_x: accX, ledgers: calcLedgers(y, isBass), is_bass: isBass });
+    });
 
-  // Pending note
-  if (pending_note !== null) {
-    const [letter, abs_step, abs_alt, octave] = spell_midi(pending_note, key_info, "");
+    return node;
+  });
+});
+
+/**
+ * 虚影音符（待输入/目标旋律）
+ * 显示在历史和弦之后，提示用户下一步：
+ * - pending：当前等待输入的旋律音（黄色问号）
+ * - target：高音题模式下尚未填充的目标旋律（虚线轮廓）
+ */
+const ghostNotes = computed(() => {
+  const ki = keyInfo.value;
+  const notes = [];
+
+  // 待输入音符（自由模式/旋律写作模式）
+  if (store.pending_note !== null) {
+    const [letter, , , octave] = spell_midi(store.pending_note, ki, '');
     const y = PITCH_Y[`${letter}${octave}`] || 90;
-    const ledgers = [];
-    if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
-    if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
-    render_nodes.push({type: "pending", chord_display: "?", notes: [{v: "S", y, x: 0, acc: "", acc_x: 0, ledgers, is_bass: false}]});
-  } else if (target_melody && target_melody.length > 0 && store.mode === "SOPRANO" && history.length < target_melody.length) {
-    // Target melody ghost notes
-    for (let i = history.length; i < target_melody.length; i++) {
-      const [letter, abs_step, abs_alt, octave] = spell_midi(target_melody[i], key_info, "");
+    notes.push({
+      type: 'pending', chord_display: '?',
+      notes: [{ v: 'S', y, x: 0, acc: '', acc_x: 0, ledgers: calcLedgers(y, false), is_bass: false }],
+    });
+  } 
+  // 高音题模式下，显示剩余未填充的目标旋律
+  else if (store.target_melody?.length > 0 && store.mode === 'SOPRANO' && store.history.length < store.target_melody.length) {
+    for (let i = store.history.length; i < store.target_melody.length; i++) {
+      const [letter, , , octave] = spell_midi(store.target_melody[i], ki, '');
       const y = PITCH_Y[`${letter}${octave}`] || 90;
-      const ledgers = [];
-      if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
-      if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
-      render_nodes.push({type: "target", chord_display: "", notes: [{v: "S", y, x: 0, acc: "", acc_x: 0, ledgers, is_bass: false}]});
+      notes.push({
+        type: 'target', chord_display: '',
+        notes: [{ v: 'S', y, x: 0, acc: '', acc_x: 0, ledgers: calcLedgers(y, false), is_bass: false }],
+      });
     }
   }
 
-  return {sigs, nodes: render_nodes};
+  return notes;
 });
 
+/**
+ * 最终渲染数据
+ * 汇总调号和所有音符节点（历史 + 虚影）
+ */
+const renderData = computed(() => ({
+  sigs: keySignatures.value,
+  nodes: [...historyNodes.value, ...ghostNotes.value],
+}));
+
+/**
+ * 播放头 X 坐标
+ * 根据当前播放位置或历史长度计算：
+ * - 播放中：跟随 playbackIndex
+ * - 未播放：跟随最后一个和弦或下一个待输入位置
+ */
 const playheadX = computed(() => {
-  const spacing = 85;
-  const startX = 112 + (renderData.value.sigs.length * 14);
-  if (store.playbackIndex !== null) return startX + store.playbackIndex * spacing;
-  let idx = store.history.length;
-  if (store.target_melody.length > 0 && idx < store.target_melody.length) return startX + idx * spacing;
-  return startX + Math.max(0, store.history.length - 1) * spacing;
+  const startX = START_X + keySignatures.value.length * SIG_SPACING;
+  if (store.playbackIndex !== null) return startX + store.playbackIndex * NOTE_SPACING;
+  const idx = store.history.length;
+  if (store.target_melody.length > 0 && idx < store.target_melody.length) return startX + idx * NOTE_SPACING;
+  return startX + Math.max(0, store.history.length - 1) * NOTE_SPACING;
 });
 
+// ============ 监听器 ============
+/**
+ * 播放头位置变化时自动滚动
+ * 使用黄金分割比例（0.382）定位播放头在视口中的位置
+ */
 watch(playheadX, async (newX) => {
-  await nextTick(); 
+  await nextTick();
   if (!scoreContainerRef.value) return;
   const container = scoreContainerRef.value;
-  const containerWidth = container.clientWidth;
-  const goldenRatioOffset = containerWidth * 0.382; 
-  const targetScrollLeft = newX - goldenRatioOffset;
-  if (targetScrollLeft > 0) { container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' }); } 
-  else { container.scrollTo({ left: 0, behavior: 'smooth' }); }
+  const offset = container.clientWidth * 0.382;
+  const target = newX - offset;
+  container.scrollTo({ left: target > 0 ? target : 0, behavior: 'smooth' });
 });
 
+// ============ 工具函数 ============
+/**
+ * 计算加线位置
+ * 当音符超出谱表范围时，需要绘制辅助短线：
+ * - 高音谱表：Y > 90（下加线）或 Y < 30（上加线）
+ * - 低音谱表：Y < 160（上加线）或 Y > 220（下加线）
+ * @param {number} y - 音符 Y 坐标
+ * @param {boolean} isBass - 是否在低音谱表
+ * @returns {number[]} 加线 Y 坐标数组
+ */
+function calcLedgers(y, isBass) {
+  const ledgers = [];
+  if (!isBass) {
+    if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
+    if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
+  } else {
+    if (y <= 160) for (let ly = 160; ly >= y; ly -= 10) ledgers.push(ly);
+    if (y >= 220) for (let ly = 220; ly <= y; ly += 10) ledgers.push(ly);
+  }
+  return ledgers;
+}
+
+/**
+ * 获取变音记号的垂直微调偏移
+ * Bravura 字体的降号/重降号视觉中心偏低，需要向上微调
+ * @param {string} sym - 变音记号 Bravura 字符
+ * @returns {number} dy 偏移量（像素）
+ */
 function getAccDy(sym) {
   if (!sym) return 0;
-  // Bravura accidentals visual center adjustments
   if (sym.includes('\uE260') || sym.includes('\uE264')) return -3;
-  if (sym.includes('\uE262') || sym.includes('\uE263')) return 0;
-  if (sym.includes('\uE261')) return 0;
   return 0;
 }
 
+/**
+ * 回退到指定历史节点
+ * 删除该节点之后的所有历史，并重新同步状态
+ * @param {number} index - 目标节点索引
+ */
 function rewindTo(index) {
   store.history = store.history.slice(0, index + 1);
   store.pending_note = null;
@@ -230,6 +382,7 @@ function rewindTo(index) {
 </script>
 
 <style scoped>
+/* 乐谱容器：圆角、边框、背景、横向滚动 */
 .score-container {
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -239,19 +392,23 @@ function rewindTo(index) {
   overflow: auto hidden;
 }
 
+/* SVG 画布 */
 .score-svg {
   display: block;
 }
 
+/* 可点击节点：历史和弦 */
 .clickable-node {
   cursor: pointer;
 }
 
+/* 悬浮背景：默认透明 */
 .clickable-node .hover-bg {
   fill: transparent;
   transition: all 0.2s;
 }
 
+/* 悬浮背景：鼠标悬停时显示淡蓝色 */
 .clickable-node:hover .hover-bg {
   fill: rgba(14, 165, 233, 0.05);
 }
