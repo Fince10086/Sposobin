@@ -2,41 +2,41 @@
   <!-- 乐谱渲染容器：包含横向滚动支持 -->
   <div class="score-container" ref="scoreContainerRef">
     <!-- SVG 画布：宽度根据音符数量动态计算，最低 900px -->
-    <svg :width="Math.max(900, renderData.nodes.length * NOTE_SPACING + START_X + 60)" 
+    <svg :width="Math.max(750, renderData.nodes.length * NOTE_SPACING + START_X + 60)" 
          height="270" class="score-svg">
       
       <!-- 谱线系统：高音谱表（5条）+ 低音谱表（5条） -->
       <g class="staff-lines">
         <!-- 高音谱表五线谱，Y 坐标从 TREBLE_TOP(30) 开始，每条间隔 10px -->
-        <line v-for="i in 5" :key="'t'+i" x1="50" :y1="STAFF.TREBLE_TOP + i*10" x2="100%" :y2="STAFF.TREBLE_TOP + i*10" 
+        <line v-for="i in 5" :key="'t'+i" x1="35" :y1="STAFF.TREBLE_TOP + i*10" x2="100%" :y2="STAFF.TREBLE_TOP + i*10" 
               :stroke="COLORS.STAFF" stroke-width="1" />
         <!-- 低音谱表五线谱，Y 坐标从 BASS_TOP(160) 开始 -->
-        <line v-for="i in 5" :key="'b'+i" x1="50" :y1="STAFF.BASS_TOP + i*10" x2="100%" :y2="STAFF.BASS_TOP + i*10" 
+        <line v-for="i in 5" :key="'b'+i" x1="35" :y1="STAFF.BASS_TOP + i*10" x2="100%" :y2="STAFF.BASS_TOP + i*10" 
               :stroke="COLORS.STAFF" stroke-width="1" />
       </g>
 
       <!-- 左侧竖线：连接高低音谱表，与大谱表左端对齐 -->
-      <line x1="50" :y1="STAFF.TREBLE_TOP + 10" x2="50" :y2="STAFF.BASS_TOP + 50" 
+      <line x1="35" :y1="STAFF.TREBLE_TOP + 10" x2="35" :y2="STAFF.BASS_TOP + 50" 
             :stroke="COLORS.STAFF" stroke-width="1" />
 
       <!-- 花括号（连谱号）：Bravura 字体 U+E000 -->
-      <text x="40" y="210" font-size="170" 
+      <text x="25" y="210" font-size="170" 
             :fill="COLORS.STAFF" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">&#xE000;</text>
       
       <!-- 高音谱号（G 谱号）：Bravura U+E050 -->
-      <text x="70" y="70" font-size="44" :fill="COLORS.STAFF" font-family="'Bravura'" 
+      <text x="55" y="70" font-size="44" :fill="COLORS.STAFF" font-family="'Bravura'"
             dominant-baseline="central" text-anchor="middle">&#xE050;</text>
       <!-- 低音谱号（F 谱号）：Bravura U+E062 -->
-      <text x="70" y="180" font-size="40" :fill="COLORS.STAFF" font-family="'Bravura'" 
+      <text x="55" y="180" font-size="40" :fill="COLORS.STAFF" font-family="'Bravura'"
             dominant-baseline="central" text-anchor="middle">&#xE062;</text>
 
       <!-- 调号：根据当前调性显示升号或降号，上下谱表同步显示 -->
       <g v-for="(sig, i) in keySignatures" :key="'sig'+i">
         <!-- 高音谱表调号 -->
-        <text :x="95 + i * SIG_SPACING" :y="sig.t_y" :dy="getAccDy(sig.sym)" font-size="34" 
+        <text :x="80 + i * SIG_SPACING" :y="sig.t_y" :dy="getAccDy(sig.sym)" font-size="34" 
               :fill="COLORS.ACCIDENTAL" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">{{ sig.sym }}</text>
         <!-- 低音谱表调号 -->
-        <text :x="95 + i * SIG_SPACING" :y="sig.b_y" :dy="getAccDy(sig.sym)" font-size="34" 
+        <text :x="80 + i * SIG_SPACING" :y="sig.b_y" :dy="getAccDy(sig.sym)" font-size="34" 
               :fill="COLORS.ACCIDENTAL" font-family="'Bravura'" dominant-baseline="central" text-anchor="middle">{{ sig.sym }}</text>
       </g>
 
@@ -50,7 +50,7 @@
         <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="250" rx="8" class="hover-bg" />
         <!-- 和弦名称：显示在谱表下方（如 T、D7、SII 等） -->
         <text v-if="node.type === 'history'" x="0" y="260" text-anchor="middle" font-weight="normal" 
-              font-family="'LCBSposobin'" font-size="27" fill="#000">{{ node.chord_display }}</text>
+              font-family="'LCBSposobin'" font-size="22" fill="#000">{{ node.chord_display }}</text>
         
         <!-- 四声部音符：S(女高)、A(女低)、T(男高)、B(男低) -->
         <g v-for="note in node.notes" :key="note.v">
@@ -90,8 +90,8 @@ import { format_chord_name } from './engine/utils/formatter.js';
 // ============ 常量定义 ============
 /** 和弦横向间距：每个和弦占 85 像素 */
 const NOTE_SPACING = 85;
-/** 音符起始 X 坐标：谱号、调号之后的位置 */
-const START_X = 130;
+  /** 音符起始 X 坐标：谱号、调号之后的位置 */
+  const START_X = 115;
 /** 调号间距：每个升降号间隔 14 像素 */
 const SIG_SPACING = 10;
 

@@ -5,28 +5,28 @@
         <span>斯波索宾和声</span>
         <span>写作引擎</span>
       </h1>
-      <div class="author-info">
-        <div class="author-line">
-          <span class="author-label">作者：</span>
-          <a href="https://space.bilibili.com/381857406" target="_blank" class="author-link">青槐树的诗</a>
-          <a href="https://space.bilibili.com/5915081" target="_blank" class="author-link">肥皂Fince</a>
-        </div>
-        <a href="https://github.com/Fince10086/Sposobin" target="_blank" class="author-link">Github</a>
-        <span class="author-text">QQ群：850900762</span>
+      <div class="mode-group">
+        <button
+          v-for="mode in modes"
+          :key="mode.key"
+          :class="['mode-btn', { active: store.mode === mode.key, disabled: mode.disabled }]"
+          :disabled="mode.disabled"
+          @click="!mode.disabled && (store.mode = mode.key, $emit('mode-change'))"
+        >
+          {{ mode.label }}
+        </button>
       </div>
     </div>
 
-    <div class="mode-group">
-      <button 
-        v-for="mode in modes" 
-        :key="mode.key"
-        :class="['mode-btn', { active: store.mode === mode.key }]"
-        @click="store.mode = mode.key; $emit('mode-change')"
-      >
-        {{ mode.label }}
-      </button>
+    <div class="author-info">
+      <div class="author-line">
+        <span class="author-label">作者：</span>
+        <a href="https://space.bilibili.com/381857406" target="_blank" class="author-link">青槐树的诗</a>
+        <a href="https://space.bilibili.com/5915081" target="_blank" class="author-link">肥皂Fince</a>
+      </div>
+      <a href="https://github.com/Fince10086/Sposobin" target="_blank" class="author-link">Github</a>
+      <span class="author-text">QQ群：850900762</span>
     </div>
-
   </header>
 </template>
 
@@ -39,6 +39,7 @@ const modes = [
   { key: 'FREE', label: '自由模式' },
   { key: 'SOPRANO', label: '高音题' },
   { key: 'COMPOSE', label: '旋律写作' },
+  { key: 'BASS', label: '低音题', disabled: true },
 ];
 </script>
 
@@ -72,6 +73,7 @@ h1 {
 .author-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 2px;
   font-size: 0.8rem;
   line-height: 1.4;
@@ -99,7 +101,8 @@ h1 {
 }
 
 .mode-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
   gap: 0;
 }
 
@@ -113,21 +116,26 @@ h1 {
   font-weight: 600;
   font-family: inherit;
   transition: background .15s, color .15s;
+  margin: -1px;
 }
 
-.mode-btn:first-child {
-  border-radius: 4px 0 0 4px;
+.mode-btn:nth-child(1) {
+  border-radius: 4px 0 0 0;
 }
 
-.mode-btn:last-child {
-  border-radius: 0 4px 4px 0;
+.mode-btn:nth-child(2) {
+  border-radius: 0 4px 0 0;
 }
 
-.mode-btn + .mode-btn {
-  margin-left: -2px;
+.mode-btn:nth-child(3) {
+  border-radius: 0 0 0 4px;
 }
 
-.mode-btn:hover:not(.active) {
+.mode-btn:nth-child(4) {
+  border-radius: 0 0 4px 0;
+}
+
+.mode-btn:hover:not(.active):not(.disabled) {
   background: #f0f0f0;
   position: relative;
   z-index: 1;
@@ -138,5 +146,9 @@ h1 {
   background: #000;
 }
 
-
+.mode-btn.disabled {
+  color: #999;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
 </style>
