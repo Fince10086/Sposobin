@@ -1,16 +1,43 @@
-// constants/modes.js - Application mode constants
+/**
+ * 应用模式与调性相关常量定义模块
+ *
+ * 本模块定义了和声写作台的三种工作模式、模式的中文标签，
+ * 以及和声推演中使用的和弦集合（合法终止和弦、起始候选和弦）。
+ */
 
+/**
+ * 应用工作模式枚举
+ * FREE: 自由探索模式，可任意选择和弦进行
+ * SOPRANO: 高音题模式，为给定的高音旋律配置和声
+ * COMPOSE: 旋律写作模式，逐音输入旋律并实时匹配和弦
+ */
 export const MODES = {
-  FREE: 'FREE',
-  SOPRANO: 'SOPRANO',
-  COMPOSE: 'COMPOSE'
+  FREE: 'FREE',           // 自由模式: 无约束探索和声网络
+  SOPRANO: 'SOPRANO',     // 高音题模式: 给定旋律求和声配置
+  COMPOSE: 'COMPOSE'      // 旋律写作模式: 交互式逐音创作
 };
 
+/**
+ * 工作模式的中文显示标签
+ * 用于UI界面中的模式选择器和提示信息
+ */
 export const MODE_LABELS = {
   [MODES.FREE]: '自由模式',
   [MODES.SOPRANO]: '高音题模式',
   [MODES.COMPOSE]: '旋律写作模式'
 };
 
+/**
+ * 合法终止和弦集合
+ * 高音题模式推演结束时，必须以主和弦（或其变形）收尾
+ * 包括大调主和弦(T)、小调主和弦(t)及其不完全/双三变形
+ */
 export const VALID_FINAL_CHORDS = new Set(['T', 'T不完全', 'T双三', 't', 't不完全']);
+
+/**
+ * 起始候选和弦列表
+ * 高音题模式的初始和弦从这些功能组中选择：
+ * 主功能(T/T₆)、属功能(D/D₆/D₇)、下属功能(S/S₆)、
+ * 小调主功能(t/t₆)、小调下属功能(s/s₆)
+ */
 export const START_CANDIDATES = ['T', 'T₆', 'D', 'D₆', 'S', 'S₆', 'D₇', 't', 't₆', 's', 's₆'];
