@@ -46,10 +46,8 @@
                 {{ mode.label }}
               </button>
             </div>
-            <div class="help-rules">
-              <div v-for="(rule, idx) in currentRules" :key="idx" class="rule-line">
-                {{ rule }}
-              </div>
+            <div class="help-content">
+              <p v-for="(rule, idx) in currentRules" :key="idx">{{ rule }}</p>
             </div>
           </div>
 
@@ -78,16 +76,23 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 
-const props = defineProps({ visible: Boolean, initialTab: { type: String, default: 'help' } });
+const props = defineProps({
+  visible: Boolean,
+  initialTab: { type: String, default: 'help' },
+  initialMode: { type: String, default: 'FREE' }
+});
 defineEmits(['close']);
 
 const activeTab = ref(props.initialTab);
+const activeMode = ref(props.initialMode);
 
 watch(() => props.initialTab, (newTab) => {
   if (newTab) activeTab.value = newTab;
 });
 
-const activeMode = ref('FREE');
+watch(() => props.initialMode, (newMode) => {
+  if (newMode) activeMode.value = newMode;
+});
 
 const tabs = [
   { key: 'help', label: '使用帮助' },
@@ -104,21 +109,25 @@ const modes = [
 const helpData = {
   FREE: [
     '核心设定：完全无拘无束地自由探索斯波索宾功能级进。',
-    '1. 解锁控制：你可以在该模式下任意切换全局调性（换调将自动清空画板）。',
-    '2. 极速算力：点击下方亮起的功能按钮，引擎会秒级为你算出教科书级的四部和声声部排列。',
-    '3. 状态回溯：直接在五线谱上点击任意历史和弦，可以直接将其执行断点回退修改。'
+    '1. 切换调性：通过上方工具栏选择全局调性，换调会自动清空当前画板。',
+    '2. 选择和弦：在右侧候选面板中点击功能按钮，引擎自动计算四部和声排列并在五线谱上显示。',
+    '3. 状态回溯：直接在五线谱上点击任意历史和弦，可将其后所有步骤回退并重新选择。',
+    '4. 试听与清空：使用工具栏按钮试听当前序列或清空画板。'
   ],
   SOPRANO: [
-    '核心设定：经典旋律逆向配和声。给定指定高音曲线，寻求完美通路。',
-    '1. 输入准备：请在下方的输入框中键入形如 C5 Eb5 G5 的音高文本，或直接在上方钢琴键盘点击弹奏录入音符。',
-    '2. 路径生成：确定旋律后点击生成推演路径，引擎会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。',
-    '3. 路径演进：根据下方弹出的候选功能按钮步步向前。如果某一处的声部进行导致断裂无法解开，系统会自动亮起终端帮你诊断违反了哪条传统古典音乐法则。'
+    '核心设定：给定高音部旋律，为每个音选择合适的和弦功能。',
+    '1. 输入旋律：使用钢琴键盘（A3-C6 范围）逐音输入高音旋律，灰色音符会立即显示在五线谱上。',
+    '2. 撤销与生成：点击 ← 撤销最后一个音，确认无误后点击 生成 构建推演路径。',
+    '3. 填补和弦：生成后从右侧候选面板为每个旋律音选择合适的和弦，系统会自动优化声部进行。',
+    '4. 诊断：若某处声部进行无法解开，系统会弹出调试终端显示阻断位置和原因。',
+    '5. 状态回溯：五线谱上点击任意历史节点可回退到该位置重新选择。'
   ],
   COMPOSE: [
-    '核心设定：主旋律随心写作，和功能级进配置双重交互前进。',
-    '1. 写作顺序：每一步都必须先在上方黄色钢琴键盘上点击选定当前步骤所需的旋律音高。',
-    '2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被引擎过滤并呈现出适合该音符的全部合法和弦。',
-    '3. 固化步进：点击对应和弦即可固化四部声部位置，并等待输入下一个旋律音。所有声部进行均实时接受平行五八度与错位硬性阻断校验。'
+    '核心设定：主旋律与和弦配置双重交互前进。',
+    '1. 输入旋律音：使用钢琴键盘（A3-C6 范围）点击当前步骤所需的旋律音，灰色音符显示在五线谱上。',
+    '2. 动态过滤：输入旋律音后，右侧候选面板自动过滤，只显示包含该音的合法和弦。',
+    '3. 固化步进：从候选面板选择和弦固化四部声部位置，然后继续输入下一个旋律音。',
+    '4. 状态回溯：五线谱上点击任意历史节点可回退到该位置重新选择。'
   ]
 };
 
@@ -152,7 +161,6 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
 
 .modal-header {
   padding: 12px 16px;
-  border-bottom: 2px solid #000;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -304,19 +312,17 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
   color: #fff;
 }
 
-.help-rules {
+.help-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
-.rule-line {
-  font-size: 0.8125rem;
+.help-content p {
+  font-size: 0.875rem;
   line-height: 1.6;
   color: #333;
-  padding: 8px 12px;
-  background: #f5f5f5;
-  border-radius: 4px;
+  margin: 0;
 }
 
 .author-links {

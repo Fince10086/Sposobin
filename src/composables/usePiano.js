@@ -8,8 +8,8 @@
 
 import { ref } from 'vue';
 
-/** 钢琴键盘的MIDI范围: A3 (57) 到 C6 (84)，覆盖3个八度 */
-const MIDI_START = 57;
+/** 钢琴键盘的MIDI范围: C2 (36) 到 C6 (84)，覆盖4个八度 */
+const MIDI_START = 36;
 const MIDI_END = 84;
 
 /** 白键宽度: 26像素 */

@@ -24,6 +24,24 @@
               </button>
               <button @click="handleReset" class="btn">清空</button>
             </div>
+            <div v-if="store.mode === 'SOPRANO'" class="toolbar-actions soprano-actions">
+              <button 
+                @click="handleUndoNote" 
+                class="btn btn-undo"
+                :disabled="store.target_melody.length === 0 || store.history.length > 0"
+                title="撤销最后一个音"
+              >
+                ←
+              </button>
+              <button 
+                @click="handleStartSoprano" 
+                class="btn btn-generate"
+                :disabled="store.target_melody.length === 0"
+              >
+                生成
+              </button>
+            </div>
+            <button @click="showAboutModal('help')" class="btn btn-help">?</button>
           </div>
 
           <ScoreRenderer />
@@ -31,8 +49,6 @@
 
         <PianoSection
           @piano-click="handlePianoClick"
-          @start-soprano="handleStartSoprano"
-          @undo-note="handleUndoNote"
         />
       </div>
 
@@ -43,7 +59,8 @@
 
     <AboutModal 
       :visible="showAboutModalFlag" 
-      :initial-tab="aboutModalTab" 
+      :initial-tab="aboutModalTab"
+      :initial-mode="store.mode"
       @close="closeAboutModal" 
     />
     <DebugTerminal @close="store.debug_message = null" />
@@ -245,5 +262,18 @@ onMounted(() => {
 
 .toolbar-actions .btn:last-child {
   border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.btn-help {
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-left: 8px;
 }
 </style>

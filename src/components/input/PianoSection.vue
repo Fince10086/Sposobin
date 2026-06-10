@@ -1,40 +1,17 @@
 <template>
-  <section 
-    :class="['piano-section', { 
-      disabled: store.mode === 'FREE',
-      inactive: store.mode === 'SOPRANO' && store.history.length > 0 
-    }]"
-  >
+  <section class="piano-section">
     <div class="piano-wrapper">
       <div class="piano">
         <div 
           v-for="note in pianoKeys" 
           :key="note.midi"
-          :class="['piano-key', note.isBlack ? 'black' : 'white']"
+          :class="['piano-key', note.isBlack ? 'black' : 'white', { 'disabled': isKeyDisabled(note.midi) }]"
           :style="{ left: note.x + 'px' }"
           @click="handleClick(note.midi)"
         >
           <span v-if="note.label" class="key-label">{{ note.label }}</span>
         </div>
       </div>
-    </div>
-
-    <div v-if="store.mode === 'SOPRANO'" class="soprano-controls">
-      <button 
-        @click="handleUndo" 
-        class="btn btn-undo"
-        :disabled="store.target_melody.length === 0 || store.history.length > 0"
-        title="撤销最后一个音"
-      >
-        ←
-      </button>
-      <button 
-        @click="$emit('start-soprano')" 
-        class="btn btn-generate"
-        :disabled="store.target_melody.length === 0"
-      >
-        生成
-      </button>
     </div>
   </section>
 </template>
@@ -45,18 +22,21 @@ import { usePiano } from '../../composables/usePiano.js';
 
 const { keys: pianoKeys } = usePiano();
 
-const emit = defineEmits(['piano-click', 'start-soprano', 'undo-note']);
+const emit = defineEmits(['piano-click']);
 
-function handleClick(midi) {
-  if (store.mode === 'FREE') return;
-  if (store.mode === 'SOPRANO' && store.history.length > 0) return;
-  emit('piano-click', midi);
+function isKeyDisabled(midi) {
+  // FREE 模式全部禁用
+  if (store.mode === 'FREE') return true;
+  // SOPRANO 生成后全部禁用
+  if (store.mode === 'SOPRANO' && store.history.length > 0) return true;
+  // SOPRANO/COMPOSE 模式下超出范围的键禁用
+  if ((store.mode === 'SOPRANO' || store.mode === 'COMPOSE') && (midi < 57 || midi > 84)) return true;
+  return false;
 }
 
-function handleUndo() {
-  if (store.target_melody.length > 0 && store.history.length === 0) {
-    emit('undo-note');
-  }
+function handleClick(midi) {
+  if (isKeyDisabled(midi)) return;
+  emit('piano-click', midi);
 }
 </script>
 
@@ -66,37 +46,18 @@ function handleUndo() {
   padding: 12px 0;
   display: flex;
   align-items: center;
-  gap: 16px;
-}
-
-.piano-section.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.piano-section.disabled .piano-key {
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.piano-section.inactive {
-  opacity: 0.4;
-}
-
-.piano-section.inactive .piano-key {
-  cursor: not-allowed;
-  pointer-events: none;
 }
 
 .piano-wrapper {
   background: #fff;
   padding: 8px;
+  overflow-x: auto;
 }
 
 .piano {
   position: relative;
   height: 100px;
-  width: 440px;
+  width: 754px;
 }
 
 .piano-key {
@@ -130,6 +91,20 @@ function handleUndo() {
   background: #333;
 }
 
+/* 禁用状态：白键灰色边框，黑键灰色填充+边框 */
+.piano-key.disabled.white {
+  border-color: #ccc;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.piano-key.disabled.black {
+  background: #999;
+  border-color: #999;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .key-label {
   position: absolute;
   bottom: 4px;
@@ -139,44 +114,5 @@ function handleUndo() {
   font-size: 9px;
   color: #666;
   font-weight: 600;
-}
-
-.soprano-controls {
-  display: flex;
-  gap: 0;
-}
-
-.btn {
-  color: #000;
-  cursor: pointer;
-  background: #fff;
-  border: 2px solid #000;
-  padding: 6px 16px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: inherit;
-  transition: background .15s;
-}
-
-.btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.btn:hover:not(:disabled) {
-  background: #f0f0f0;
-  position: relative;
-  z-index: 1;
-}
-
-.btn-undo {
-  border-radius: 4px 0 0 4px;
-  min-width: 40px;
-  padding: 6px 8px;
-}
-
-.btn-generate {
-  border-radius: 0 4px 4px 0;
-  margin-left: -2px;
 }
 </style>
