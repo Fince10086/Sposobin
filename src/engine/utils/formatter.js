@@ -6,8 +6,8 @@
  *   - categorize_chords: 将和弦按功能组分类（主/下属/属/重属/变音/离调）
  *
  * 分类体系基于斯波索宾和声学的功能组理论:
- *   主功能(T)、下属功能(S)、属功能(D)、重属功能(DD)、
- *   导功能(Dᵥᵢᵢ)、变音和弦(N/增六)、离调和弦(副属/副下属)
+ *   自然音阶: 主功能、下属功能、属功能、导功能
+ *   离调体系: 副属和弦、副下属和弦、重属与变和弦
  */
 
 /**
@@ -49,61 +49,63 @@ export function format_chord_name(name) {
  * 将和弦列表按功能组分类
  * @param {string[]} chords - 和弦名称数组
  * @returns {Object} {diatonic: {}, tonicization: {}}
- *   - diatonic: 自然音阶功能组（主/下属/属/重属/导/变音/其他）
- *   - tonicization: 离调体系（副属/副下属和弦）
+ *   - diatonic: 自然音阶功能组
+ *   - tonicization: 离调体系
  *
  * 分类逻辑:
- *   1. 包含 "/" 且非增六和弦 → 离调和弦
+ *   1. 离调和弦（包含 "/"）：
  *      - D/Dᵥᵢᵢ开头 → 副属和弦
  *      - S/s/Sᵢᵢ/sᵢᵢ开头 → 副下属和弦
- *   2. 其他和弦 → 自然音阶和弦
+ *   2. 重属与变和弦（DD/N/It/Ger/Fr）→ 归入离调体系
+ *   3. 其他和弦 → 自然音阶和弦
  *      - 按功能前缀分配到对应分组
  */
 export function categorize_chords(chords) {
   // 自然音阶功能组定义
   const diatonic = {
-    '主功能组 (T / t / DT)': [],          // 主和弦及其变形
-    '下属功能组 (S / s / VI)': [],        // 下属和弦及平行调
-    '变和弦组 (N / +6)': [],              // 那不勒斯、增六和弦
-    '属功能组 (D / K / VII)': [],         // 属和弦及终止四六
-    '导功能组 (Dᵥᵢᵢ)': [],                // 导七和弦系列
-    '重属功能组 (DD)': [],                // 重属和弦系列
-    '特殊变音与扩展和弦 (Others)': []     // 其他特殊和弦
+    '主功能组': [],          // 主和弦及其变形
+    '下属功能组': [],        // 下属和弦及平行调
+    '属功能组': [],         // 属和弦及终止四六
+    '导功能组': [],                // 导七和弦系列
+    '特殊变音与扩展和弦': []     // 其他特殊和弦
   };
 
   const tonicization = {};  // 离调和弦动态分组
 
   for (const chord of chords) {
     // ===== 离调和弦分类 =====
-    if (chord.includes('/') && !chord.startsWith('It') && !chord.startsWith('Ger') && !chord.startsWith('Fr')) {
+    if (chord.includes('/')) {
       const target_deg = chord.split('/')[1];
       if (chord.startsWith('D') || chord.startsWith('Dᵥᵢᵢ')) {
         // 副属和弦: D/VI, Dᵥᵢᵢ₇/II 等
-        const cat = `副属和弦 (至 ${target_deg} 级)`;
+        const cat = `${target_deg}级副属和弦`;
         if (!tonicization[cat]) tonicization[cat] = [];
         tonicization[cat].push(chord);
       } else if (chord.startsWith('S') || chord.startsWith('s') || chord.startsWith('Sᵢᵢ') || chord.startsWith('sᵢᵢ')) {
         // 副下属和弦: S/II, sᵢᵢ₆/VI 等
-        const cat = `副下属和弦 (至 ${target_deg} 级)`;
+        const cat = `${target_deg}级副下属和弦`;
         if (!tonicization[cat]) tonicization[cat] = [];
         tonicization[cat].push(chord);
       }
-    } else {
-      // ===== 自然音阶和弦分类 =====
-      if (chord.startsWith('N') || chord.startsWith('It') || chord.startsWith('Ger') || chord.startsWith('Fr')) {
-        diatonic['变和弦组 (N / +6)'].push(chord);
-      } else if (chord.startsWith('DD')) {
-        diatonic['重属功能组 (DD)'].push(chord);
-      } else if (chord.startsWith('Dᵥᵢᵢ')) {
-        diatonic['导功能组 (Dᵥᵢᵢ)'].push(chord);
+    }
+    // ===== 重属与变和弦 → 归入离调体系 =====
+    else if (chord.startsWith('DD') || chord.startsWith('N') || chord.startsWith('It') || chord.startsWith('Ger') || chord.startsWith('Fr')) {
+      const cat = '重属与变和弦';
+      if (!tonicization[cat]) tonicization[cat] = [];
+      tonicization[cat].push(chord);
+    }
+    // ===== 自然音阶和弦分类 =====
+    else {
+      if (chord.startsWith('Dᵥᵢᵢ')) {
+        diatonic['导功能组'].push(chord);
       } else if (chord.startsWith('T') || chord.startsWith('t') || chord.startsWith('DT')) {
-        diatonic['主功能组 (T / t / DT)'].push(chord);
+        diatonic['主功能组'].push(chord);
       } else if (chord.startsWith('S') || chord.startsWith('s') || chord.startsWith('VI') || chord.startsWith('♭VI')) {
-        diatonic['下属功能组 (S / s / VI)'].push(chord);
+        diatonic['下属功能组'].push(chord);
       } else if (chord.startsWith('D') || chord.startsWith('K') || chord.startsWith('VII') || chord.startsWith('♭VII')) {
-        diatonic['属功能组 (D / K / VII)'].push(chord);
+        diatonic['属功能组'].push(chord);
       } else {
-        diatonic['特殊变音与扩展和弦 (Others)'].push(chord);
+        diatonic['特殊变音与扩展和弦'].push(chord);
       }
     }
   }
