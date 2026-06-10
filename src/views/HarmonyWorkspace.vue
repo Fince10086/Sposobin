@@ -1,10 +1,12 @@
 <template>
   <div class="app-container">
-    <AppHeader @show-update="showUpdateReportModal = true" />
+    <AppHeader 
+      @mode-change="handleModeChange" 
+      @show-about="showAboutModal('help')"
+      @show-update="showAboutModal('update')"
+    />
 
     <div class="main-layout">
-      <ControlPanel @reset="handleReset" @show-help="openHelpModal" />
-
       <transition name="fade">
         <PianoSection
           v-if="store.mode !== 'FREE'"
@@ -15,16 +17,18 @@
 
       <section class="score-section glass-card">
         <div class="toolbar">
-          <div class="btn-group">
-            <button @click="handlePlaySequence" class="modern-btn btn-success">
-              <span class="icon">▶</span> 试听序列
-            </button>
-            <button @click="handleReset" class="modern-btn btn-danger">
-              <span class="icon">🗑️</span> 清空画板
-            </button>
+          <div class="toolbar-left">
+            <select v-model="store.key_name" @change="handleReset" class="key-select">
+              <option v-for="key in keys" :key="key" :value="key">{{ key }}</option>
+            </select>
           </div>
-          <div class="hint-text">
-            <span>💡 提示：点击五线谱上的和弦可将其 <b>断点回退</b></span>
+          <div class="toolbar-right">
+            <button @click="handlePlaySequence" class="btn btn-primary" :disabled="store.history.length === 0">
+              试听序列
+            </button>
+            <button @click="handleReset" class="btn btn-danger">
+              清空
+            </button>
           </div>
         </div>
 
@@ -34,92 +38,47 @@
       <ChordPalette @select-chord="handleSelectChord" />
     </div>
 
-    <UpdateModal :visible="showUpdateReportModal" @close="closeUpdateReportModal" />
-    <HelpModal :visible="showHelpModal" :title="helpTitle" :rules="helpRules" @close="showHelpModal = false" />
+    <AboutModal :visible="showAboutModalFlag" :initial-tab="aboutModalTab" @close="closeAboutModal" />
     <DebugTerminal @close="store.debug_message = null" />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { store, sync_state, reset_state } from '../engine/store.js';
+import { KEY_REGISTRY } from '../engine/tonality/index.js';
 import { useAudio } from '../composables/useAudio.js';
 import { usePlayback } from '../composables/usePlayback.js';
 import { usePiano } from '../composables/usePiano.js';
 
 import AppHeader from '../components/layout/AppHeader.vue';
-import ControlPanel from '../components/layout/ControlPanel.vue';
 import PianoSection from '../components/input/PianoSection.vue';
 import ChordPalette from '../components/layout/ChordPalette.vue';
 import ScoreRenderer from '../ScoreRenderer.vue';
-import UpdateModal from '../components/modal/UpdateModal.vue';
-import HelpModal from '../components/modal/HelpModal.vue';
+import AboutModal from '../components/modal/AboutModal.vue';
 import DebugTerminal from '../components/display/DebugTerminal.vue';
 
 const { playSingleChord } = useAudio();
 const { startPlayback, resetPlayback } = usePlayback();
 const { midiToNoteName } = usePiano();
 
-const showUpdateReportModal = ref(false);
-const showHelpModal = ref(false);
-const seenModes = reactive({ FREE: false, SOPRANO: false, COMPOSE: false });
+const keys = Object.keys(KEY_REGISTRY);
 
-const helpData = {
-  FREE: {
-    title: '🎵 自由模式 · 使用规则',
-    rules: [
-      '💡 核心设定：完全无拘无束地自由探索斯波索宾功能级进。',
-      '1. 解锁控制：你可以在该模式下任意切换左侧全局调性（换调将自动清空画板）。',
-      '2. 极速算力：点击下方亮起的功能按钮，引擎会秒级为你算出教科书级的四部和声声部排列。',
-      '3. 状态回溯：直接在五线谱上点击任意历史和弦，可以直接将其执行「断点回退」修改。'
-    ]
-  },
-  SOPRANO: {
-    title: '⚡ 高音题模式 · 使用规则',
-    rules: [
-      '💡 核心设定：经典旋律逆向配和声。给定指定高音曲线，寻求完美通路。',
-      '1. 输入准备：请在下方的输入框中键入形如 \'C5 E5 G5\' 的音高文本，或直接在上方钢琴键盘点击弹奏录入音符。',
-      '2. 路径生成：确定旋律后点击「生成推演路径」，引擎会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。',
-      '3. 路径演进：根据下方弹出的候选功能按钮步步向前。如果某一处的声部进行导致断裂无法解开，系统会自动亮起终端帮你诊断违反了哪条传统古典音乐法则。'
-    ]
-  },
-  COMPOSE: {
-    title: '🎹 旋律写作模式 · 使用规则',
-    rules: [
-      '💡 核心设定：主旋律随心写作，和功能级进配置双重交互前进。',
-      '1. 写作顺序：每一步都必须「先」在上方黄色钢琴键盘上点击选定当前步骤所需的「旋律音高」。',
-      '2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被引擎过滤并呈现出适合该音符的全部合法和弦。',
-      '3. 固化步进：点击对应和弦即可固化四部声部位置，并等待输入下一个旋律音。所有声部进行均实时接受平行五八度与错位硬性阻断校验。'
-    ]
-  }
-};
+const showAboutModalFlag = ref(false);
+const aboutModalTab = ref('help');
 
-const helpTitle = ref(helpData.FREE.title);
-const helpRules = ref(helpData.FREE.rules);
-
-function openHelpModal() {
-  const mode = store.mode;
-  helpTitle.value = helpData[mode]?.title || helpData.FREE.title;
-  helpRules.value = helpData[mode]?.rules || helpData.FREE.rules;
-  showHelpModal.value = true;
+function showAboutModal(tab = 'help') {
+  aboutModalTab.value = tab;
+  showAboutModalFlag.value = true;
 }
 
-function closeUpdateReportModal() {
-  showUpdateReportModal.value = false;
-  if (!seenModes[store.mode]) {
-    openHelpModal();
-    seenModes[store.mode] = true;
-  }
+function closeAboutModal() {
+  showAboutModalFlag.value = false;
 }
 
-watch(() => store.mode, (newMode) => {
-  if (!seenModes[newMode] && !showUpdateReportModal.value) {
-    helpTitle.value = helpData[newMode]?.title;
-    helpRules.value = helpData[newMode]?.rules;
-    showHelpModal.value = true;
-    seenModes[newMode] = true;
-  }
-});
+function handleModeChange() {
+  reset_state();
+}
 
 function handleReset() {
   resetPlayback();
@@ -137,9 +96,7 @@ function handlePianoClick(midi) {
     sync_state();
   } else if (store.mode === 'SOPRANO') {
     const input = midiToNoteName(midi);
-    // The PianoSection component handles its own input state,
-    // but for soprano mode we need to pass it back somehow
-    // For now, we'll just play it if in free mode
+    // The PianoSection component handles its own input state
   } else {
     playSingleChord({ S: midi });
   }
@@ -148,7 +105,6 @@ function handlePianoClick(midi) {
 function handleStartSoprano(inputText) {
   // Parse melody and trigger soprano mode
   // This needs to be handled - the piano section has its own input
-  // We need to expose the melody input from PianoSection or handle it here
 }
 
 function handleSelectChord(chord) {
@@ -159,16 +115,11 @@ function handleSelectChord(chord) {
 }
 
 onMounted(() => {
-  document.title = 'Sposobin Engine 1.1 - 斯波索宾和声写作台';
+  document.title = '斯波索宾和声引擎';
   const hasSeenUpdate = localStorage.getItem('seenUpdateReport1.1');
   if (!hasSeenUpdate) {
-    showUpdateReportModal.value = true;
+    showAboutModal('update');
     localStorage.setItem('seenUpdateReport1.1', 'true');
-  } else {
-    helpTitle.value = helpData.FREE.title;
-    helpRules.value = helpData.FREE.rules;
-    showHelpModal.value = true;
-    seenModes.FREE = true;
   }
   sync_state();
 });
@@ -179,7 +130,7 @@ onMounted(() => {
 
 @font-face {
   font-family: 'Bravura';
-  src: url('./fonts/Bravura.woff2') format('woff2');
+  src: url('/fonts/Bravura.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -195,7 +146,7 @@ onMounted(() => {
   --border: #E2E8F0;
   --danger: #EF4444;
   --success: #10B981;
-  --radius-lg: 16px;
+  --radius-lg: 12px;
   --radius-md: 8px;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
   --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
@@ -206,38 +157,104 @@ body {
   background-color: var(--bg-color);
   color: var(--text-main);
   margin: 0;
-  padding: 20px 0;
+  padding: 16px 0;
   -webkit-font-smoothing: antialiased;
 }
 
 .app-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
 .glass-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
-.score-section { margin-bottom: 20px; }
-.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.btn-group { display: flex; gap: 12px; }
-.hint-text { font-size: 13px; color: var(--text-muted); background: #F8FAFC; padding: 6px 12px; border-radius: 99px; }
-.modern-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-.modern-btn:active { transform: scale(0.96); }
-.btn-success { background: var(--success); color: white; }
-.btn-success:hover { background: #059669; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-.btn-danger { background: white; color: var(--danger); border: 1px solid #FECACA; }
-.btn-danger:hover { background: #FEF2F2; }
+.score-section { margin-bottom: 16px; }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.key-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text-main);
+  cursor: pointer;
+  outline: none;
+  transition: 0.2s;
+}
+
+.key-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-danger {
+  background: white;
+  color: var(--danger);
+  border: 1px solid #FECACA;
+}
+
+.btn-danger:hover {
+  background: #FEF2F2;
+}
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
 @media screen and (max-width: 768px) {
-  .toolbar { flex-direction: column; gap: 12px; align-items: stretch; }
-  .btn-group { display: flex; width: 100%; }
-  .btn-group .modern-btn { flex: 1; }
-  .hint-text { text-align: center; }
+  .toolbar { flex-direction: column; gap: 8px; align-items: stretch; }
+  .toolbar-left, .toolbar-right { width: 100%; }
+  .toolbar-right { justify-content: stretch; }
+  .toolbar-right .btn { flex: 1; }
+  .key-select { width: 100%; }
 }
 </style>
