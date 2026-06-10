@@ -36,3 +36,5 @@ run_list.py
 scan_project.py
 cleanup_temp.py
 _scan.py
+
+dist

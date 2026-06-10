@@ -1,13 +1,13 @@
 // store.js - Local state management replacing the Python backend
 
 import { reactive } from 'vue';
-import { MAJOR_DNA, MINOR_DNA, PITCH_Y } from './data.js';
-import { KEY_REGISTRY, transpose_dna, spell_midi } from './tonality.js';
+import { MAJOR_DNA, MINOR_DNA } from './data.js';
+import { KEY_REGISTRY, transpose_dna } from './tonality.js';
 import { v_to_tuple, tuple_to_v, get_chord_siblings } from './utils.js';
 import { get_chord_candidates } from './candidates.js';
 import { evaluate_voicing } from './rules.js';
 import { build_full_dag, calculate_best_voicing } from './dag.js';
-import { format_chord_name, categorize_chords } from './formatter.js';
+import { categorize_chords } from './formatter.js';
 
 export const store = reactive({
   mode: "FREE",
@@ -15,7 +15,6 @@ export const store = reactive({
   target_melody: [],
   history: [],
   pending_note: null,
-  renderData: { sigs: [], nodes: [] },
   categories: { diatonic: {}, tonicization: {} },
   playbackIndex: null,
   debug_message: null,
@@ -55,125 +54,6 @@ function score_initial(v, shift) {
   const ideal_T = 60 + v_shift;
   const ideal_B = 48 + v_shift;
   return Math.abs(v.S - ideal_S) * 1.5 + Math.abs(v.A - ideal_A) + Math.abs(v.T - ideal_T) + Math.abs(v.B - ideal_B);
-}
-
-function generate_render_data() {
-  const key_info = get_key_info();
-  const history = store.history;
-  const target_melody = store.target_melody;
-  const pending_note = store.pending_note;
-
-  const render_nodes = [];
-  const sig_count = key_info.sigs;
-  const sig_type = key_info.sig_type;
-  const sigs = [];
-  if (sig_count > 0 && sig_type !== "none") {
-    const positions = {
-      sharp: {treble: [40,55,35,50,65,45,60], bass: [180,195,175,190,205,185,200]},
-      flat: {treble: [60,45,65,50,70,55,75], bass: [200,185,205,190,210,195,215]}
-    };
-    for (let i = 0; i < sig_count; i++) {
-      sigs.push({sym: sig_type === "sharp" ? "\uE262" : "\uE260", t_y: positions[sig_type].treble[i], b_y: positions[sig_type].bass[i]});
-    }
-  }
-
-  const key_sig_alts = {};
-  for (let s = 0; s < 7; s++) key_sig_alts[s] = 0;
-  if (sig_type === "sharp") {
-    const order = [3,0,4,1,5,2,6];
-    for (let i = 0; i < sig_count; i++) key_sig_alts[order[i]] = 1;
-  } else if (sig_type === "flat") {
-    const order = [6,2,5,1,4,0,3];
-    for (let i = 0; i < sig_count; i++) key_sig_alts[order[i]] = -1;
-  }
-
-  const running_accidentals = {};
-
-  for (let index = 0; index < history.length; index++) {
-    const item = history[index];
-    const chord = item.chord;
-    const voices = item.voices;
-    const node = {type: "history", chord_display: format_chord_name(chord), notes: [], original_index: index};
-
-    const y_positions = {};
-    for (const [v_name, is_bass] of [['S', false], ['A', false], ['T', true], ['B', true]]) {
-      const midi = voices[v_name];
-      const [letter, abs_step, abs_alt, octave] = spell_midi(midi, key_info, chord);
-      y_positions[v_name] = PITCH_Y[`${letter}${octave}${is_bass ? "_bass" : ""}`];
-    }
-
-    const drawn_accidentals = {};
-    for (const [v_name, is_bass] of [['S', false], ['A', false], ['T', true], ['B', true]]) {
-      const midi = voices[v_name];
-      const [letter, abs_step, abs_alt, octave] = spell_midi(midi, key_info, chord);
-      const y = y_positions[v_name];
-      if (y == null) continue;
-      const staff = is_bass ? 1 : 0;
-      const acc_key = `${staff}_${octave}_${abs_step}`;
-      const curr_alt = running_accidentals[acc_key] !== undefined ? running_accidentals[acc_key] : key_sig_alts[abs_step];
-      if (abs_alt !== curr_alt) {
-        drawn_accidentals[v_name] = [y, abs_alt, acc_key];
-      }
-    }
-
-    for (const [v_name, is_bass] of [['S', false], ['A', false], ['T', true], ['B', true]]) {
-      const y = y_positions[v_name];
-      if (y == null) continue;
-
-      let is_shifted = false;
-      for (const [other_voice, other_y] of Object.entries(y_positions)) {
-        if (other_y != null && other_voice !== v_name && other_y - y === 5) {
-          is_shifted = true;
-          break;
-        }
-      }
-      const note_x = is_shifted ? 13 : 0;
-
-      let acc_str = "";
-      let acc_x = 0;
-      if (v_name in drawn_accidentals) {
-        const [, abs_alt, acc_key] = drawn_accidentals[v_name];
-        const accMap = {"-2": "\uE264", "-1": "\uE260", "0": "\uE261", "1": "\uE262", "2": "\uE263"};
-        acc_str = accMap[String(abs_alt)] || "";
-        running_accidentals[acc_key] = abs_alt;
-        acc_x = is_shifted ? -3 : -18;
-        const has_drawn_above = Object.entries(drawn_accidentals).some(([ov, [oy]]) => ov !== v_name && oy < y && y - oy <= 11);
-        if (!is_shifted && has_drawn_above) acc_x = -28;
-      }
-
-      const ledgers = [];
-      if (!is_bass) {
-        if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
-        if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
-      } else {
-        if (y <= 160) for (let ly = 160; ly >= y; ly -= 10) ledgers.push(ly);
-        if (y >= 220) for (let ly = 220; ly <= y; ly += 10) ledgers.push(ly);
-      }
-
-      node.notes.push({v: v_name, y, x: note_x, acc: acc_str, acc_x, ledgers, is_bass});
-    }
-    render_nodes.push(node);
-  }
-
-  if (pending_note !== null) {
-    const [letter, abs_step, abs_alt, octave] = spell_midi(pending_note, key_info, "");
-    const y = PITCH_Y[`${letter}${octave}`] || 90;
-    const ledgers = [];
-    if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
-    if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
-    render_nodes.push({type: "pending", chord_display: "?", notes: [{v: "S", y, x: 0, acc: "", acc_x: 0, ledgers, is_bass: false}]});
-  } else if (target_melody && target_melody.length > 0 && store.mode === "SOPRANO" && history.length < target_melody.length) {
-    for (let i = history.length; i < target_melody.length; i++) {
-      const [letter, abs_step, abs_alt, octave] = spell_midi(target_melody[i], key_info, "");
-      const y = PITCH_Y[`${letter}${octave}`] || 90;
-      const ledgers = [];
-      if (y >= 90) for (let ly = 90; ly <= y; ly += 10) ledgers.push(ly);
-      if (y <= 30) for (let ly = 30; ly >= y; ly -= 10) ledgers.push(ly);
-      render_nodes.push({type: "target", chord_display: "", notes: [{v: "S", y, x: 0, acc: "", acc_x: 0, ledgers, is_bass: false}]});
-    }
-  }
-
-  store.renderData = {sigs, nodes: render_nodes};
 }
 
 export function sync_state(action_chord = null) {
@@ -406,7 +286,6 @@ export function sync_state(action_chord = null) {
   }
 
   store.categories = categorize_chords(next_chords);
-  generate_render_data();
 }
 
 export function reset_state() {
