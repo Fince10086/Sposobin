@@ -2,14 +2,8 @@
   <div class="app-container">
     <header class="app-header">
       <div class="top-right-actions">
-        <button @click="showDonateModal = true" class="modern-btn btn-success donate-btn">
-          <span class="icon">🔋</span> 帮服务器续命一天
-        </button>
         <button @click="showUpdateReportModal = true" class="modern-btn btn-primary update-top-btn">
           <span class="icon">🚀</span> 更新公告
-        </button>
-        <button @click="openGeneralFeedbackModal" class="modern-btn btn-danger feedback-top-btn">
-          <span class="icon">💬</span> 反馈问题
         </button>
       </div>
 
@@ -44,18 +38,18 @@
             <button @click="openHelpModal" class="help-trigger-btn" title="查看当前工作模式引导说明">❓</button>
           </label>
           <div class="segmented-control">
-            <input type="radio" id="mode-free" name="mode" value="FREE" v-model="store.mode" @change="resetState">
+            <input type="radio" id="mode-free" name="mode" value="FREE" v-model="store.mode" @change="reset_state">
             <label for="mode-free">自由模式</label>
-            <input type="radio" id="mode-soprano" name="mode" value="SOPRANO" v-model="store.mode" @change="resetState">
+            <input type="radio" id="mode-soprano" name="mode" value="SOPRANO" v-model="store.mode" @change="reset_state">
             <label for="mode-soprano">高音题模式</label>
-            <input type="radio" id="mode-compose" name="mode" value="COMPOSE" v-model="store.mode" @change="resetState">
+            <input type="radio" id="mode-compose" name="mode" value="COMPOSE" v-model="store.mode" @change="reset_state">
             <label for="mode-compose">旋律写作模式</label>
           </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">全局调性 (Tonality)</label>
-          <select v-model="store.key_name" @change="resetState" class="modern-select">
+          <select v-model="store.key_name" @change="reset_state" class="modern-select">
             <option v-for="key in keys" :key="key" :value="key">{{ key }}</option>
           </select>
         </div>
@@ -83,40 +77,13 @@
         </section>
       </transition>
 
-    <transition name="modal">
-      <div v-if="showDonateModal" class="help-overlay" @click="showDonateModal = false">
-        <div class="help-window" style="width: 450px;" @click.stop>
-          <div class="help-header" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">
-            <h3 style="color: white; display: flex; align-items: center; gap: 8px;">🔋 帮服务器续命一天</h3>
-            <button class="close-help-btn" style="color: rgba(255,255,255,0.8);" @click="showDonateModal = false">✕</button>
-          </div>
-          <div class="help-body" style="text-align: center; gap: 16px;">
-            <p class="update-text" style="font-size: 15px;">“一块钱！一块钱————”</p>
-            <div style="display: flex; justify-content: center; margin-top: 10px;">
-              <div style="width: 200px; padding: 15px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                <h4 style="margin-bottom: 12px; color: #10B981; font-size: 16px;">微信赞赏</h4>
-                <div style="width: 100%; aspect-ratio: 1; background: #E2E8F0; display: flex; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
-                  <img src="./assets/code.png" alt="微信赞赏码" style="width: 100%; height: 100%; object-fit: contain; pointer-events: auto; -webkit-touch-callout: default;" />
-                </div>
-                <p style="color: #64748B; font-size: 13px; margin: 0; line-height: 1.5;">
-                  📱 <b>移动端：</b>长按识别二维码<br/>或保存图片后打开微信扫一扫
-                </p>
-              </div>
-            </div>
-            <p style="color: #94A3B8; font-size: 12px; margin-top: 15px;">扫码金额可自定义，随意金额即可支持项目运行，非常感谢！</p>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-
       <section class="score-section glass-card">
         <div class="toolbar">
           <div class="btn-group">
             <button @click="playSequenceWithPlayhead" class="modern-btn btn-success">
               <span class="icon">▶</span> 试听序列
             </button>
-            <button @click="resetState" class="modern-btn btn-danger">
+            <button @click="reset_state" class="modern-btn btn-danger">
               <span class="icon">🗑️</span> 清空画板
             </button>
           </div>
@@ -176,7 +143,7 @@
         <div v-if="Object.keys(store.categories.diatonic).length === 0 && Object.keys(store.categories.tonicization).length === 0" class="empty-state-msg glass-card">
           <div class="empty-icon">🧩</div>
           <h3>{{ store.mode === 'SOPRANO' ? (store.target_melody.length > 0 ? '引擎计算中或当前无可用连通路径' : '等待旋律输入') : (store.mode === 'COMPOSE' ? '请点击上方键盘选定起始音' : '引擎校验中，当前路径封锁') }}</h3>
-          <p v-if="store.mode === 'SOPRANO' && store.target_melody.length > 0">请注意查看是否有 Mac 终端错误弹窗报告阻断位置。</p>
+          <p v-if="store.mode === 'SOPRANO' && store.target_melody.length > 0">请查看下方弹出的调试终端以诊断阻断位置。</p>
           <p v-else>请按规则完成前置操作以激活推演算法。</p>
         </div>
 
@@ -207,7 +174,7 @@
       <div v-if="showUpdateReportModal" class="help-overlay" @click="closeUpdateReportModal">
         <div class="help-window" style="width: 560px;" @click.stop>
           <div class="help-header" style="background: linear-gradient(135deg, #0284C7, #0EA5E9); color: white;">
-            <h3 style="color: white; display: flex; align-items: center; gap: 8px;">🚀 斯波索宾和声写作台 · 1.1 升级报告</h3>
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px;">🚀 斯波索宾和声写作台 · 1.1 Pro 升级报告</h3>
             <button class="close-help-btn" style="color: rgba(255,255,255,0.8);" @click="closeUpdateReportModal">✕</button>
           </div>
           <div class="help-body" style="gap: 16px; max-height: 65vh; overflow-y: auto;">
@@ -215,7 +182,6 @@
               <h4 class="update-section-title">🏛️ 平台核心功能概述</h4>
               <p class="update-text">本平台是将经典的<b>斯波索宾《和声学》</b>体系进行完全数字化代码化的智能推演工程。严密把控平行五八度、声部交叉、四部音域约束及非法解决；提供自由级进探索、指定旋律高音题推演、旋律随心写作三大专业模式。</p>
             </div>
-            
             
             <div class="update-section">
               <h4 class="update-section-title" style="color: #F59E0B;">🚀 1.1 Pro 重磅更新：高阶和声网络扩展与线性流动重构</h4>
@@ -232,8 +198,8 @@
               <ul class="update-list">
                 <li><b>🚄 零延迟云端状态算力缓存</b>：重构底层无状态算法，新增有状态指纹缓存。高音题推演拒绝每次重复刷新动态规划，实现客户端级别秒回。</li>
                 <li><b>🎛️ 换调枷锁全面解禁</b>：彻底破除高音题与写作模式下的换调锁死，全模式自由调整 26 种大小调性，换调联动自动熔断画板。</li>
-                <li><b>🛡️ 独家数字音频过载防爆保护</b>：前端集成 `Tone.Limiter` 压限芯片与单通道 Headroom 空间控制，任凭快速点击叠加，声音绝不斩波破音。</li>
-                <li><b>📊 会话快照与教材错题云提报</b>：终端断链诊断区及右上角新增一键反馈，可打包旋律与级进快照呈报至受密钥保护的后台面板（`/admin`）。</li>
+                <li><b>🛡️ 独家数字音频过载防爆保护</b>：前端集成  压限芯片与单通道 Headroom 空间控制，任凭快速点击叠加，声音绝不斩波破音。</li>
+                <li><b>📊 会话快照与教材错题云提报</b>：终端断链诊断区及右上角新增一键反馈，可打包旋律与级进快照呈报至受密钥保护的后台面板（）。</li>
               </ul>
             </div>
           </div>
@@ -264,34 +230,6 @@
     </transition>
 
     <transition name="modal">
-      <div v-if="generalFeedbackModalOpen" class="help-overlay" @click="generalFeedbackModalOpen = false">
-        <div class="help-window" style="width: 520px;" @click.stop>
-          <div class="help-header" style="background: #FEF2F2;">
-            <h3 style="color: #DC2626;">💬 反馈当前和声级进与系统问题</h3>
-            <button class="close-help-btn" @click="generalFeedbackModalOpen = false">✕</button>
-          </div>
-          <div class="help-body" style="gap: 12px;">
-            <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 4px 0;">系统将自动抓取当前调性、谱面音符与已配和弦序列作为环境快照一同呈报。</p>
-            <div class="snapshot-preview font-mono">
-              <div>当前调性: {{ store.key_name }} ({{ store.mode }})</div>
-              <div>当前录入音数: {{ store.target_melody.length }} 个</div>
-              <div>当前历史步数: {{ store.history.length }} 步</div>
-            </div>
-            
-            <label class="form-label" style="margin-top: 8px;">您的联系邮箱（必填）：</label>
-            <input type="email" v-model="generalFeedbackEmail" class="modern-input" style="border-color: #FCA5A5;" placeholder="请输入您的有效邮箱地址（方便修复后给您回信）" />
-
-            <label class="form-label" style="margin-top: 4px;">问题或教材错题出处：</label>
-            <input type="text" v-model="generalFeedbackText" class="modern-input" style="border-color: #FCA5A5;" placeholder="例如：斯波索宾第15章第3题 或 某种特定排列不发声" />
-          </div>
-          <div class="help-footer" style="background: #FEF2F2;">
-            <button class="modern-btn btn-primary" style="background: #EF4444;" @click="submitGeneralFeedback">提交数据快照</button>
-          </div>
-        </div>
-      </div>
-    </transition>
-
-    <transition name="modal">
       <div v-if="store.debug_message" class="terminal-overlay" @click="closeDebugModal">
         <div class="terminal-window" @click.stop>
           <div class="terminal-header">
@@ -304,15 +242,6 @@
           </div>
           <div class="terminal-body">
             <pre>{{ store.debug_message }}</pre>
-            
-            <div v-if="isUnsolvableDAGErr" class="terminal-feedback-box">
-              <div class="t-feedback-title">🔍 侦测到连通性死胡同！这首题目无解？提报出处以便优化内核：</div>
-              <div class="t-feedback-form-stacked">
-                <input type="email" v-model="issueEmailInput" placeholder="请输入您的有效联系邮箱（必填）" class="t-feedback-input" style="border-color: #555;" />
-                <input type="text" v-model="issueSourceInput" placeholder="请输入题目出处（例如：教材第25章第4题）" class="t-feedback-input" />
-                <button @click="submitUnsolvableIssue" class="t-feedback-btn">一键提交后台</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -323,40 +252,18 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
 import * as Tone from 'tone';
+import { store, sync_state, reset_state } from './engine/store.js';
+import { KEY_REGISTRY } from './engine/tonality.js';
 
-const keys = [
-  "C 大调 (C Major)", "G 大调 (G Major)", "D 大调 (D Major)", "A 大调 (A Major)", "E 大调 (E Major)", "B 大调 (B Major)", "F# 大调 (F# Major)",
-  "F 大调 (F Major)", "Bb 大调 (Bb Major)", "Eb 大调 (Eb Major)", "Ab 大调 (Ab Major)", "Db 大调 (Db Major)", "Gb 大调 (Gb Major)",
-  "a 小调 (a minor)", "e 小调 (e minor)", "b 小调 (b minor)", "f# 小调 (f# minor)", "c# 小调 (c# minor)", "g# 小调 (g# minor)", "d# 小调 (d# minor)",
-  "d 小调 (d minor)", "g 小调 (g minor)", "c 小调 (c minor)", "f 小调 (f minor)", "bb 小调 (bb minor)", "eb 小调 (eb minor)"
-];
-
-const store = reactive({
-  mode: "FREE",
-  key_name: "C 大调 (C Major)",
-  target_melody: [],
-  history: [],
-  pending_note: null,
-  renderData: { sigs: [], nodes: [] },
-  categories: { diatonic: {}, tonicization: {} },
-  playbackIndex: null,
-  debug_message: null
-});
+const keys = Object.keys(KEY_REGISTRY);
 
 const melodyInput = ref("");
 const scoreContainerRef = ref(null);
 
 const showUpdateReportModal = ref(false);
-const showDonateModal = ref(false);
 const showHelpModal = ref(false);
 const currentHelpMode = ref("FREE");
 const seenModes = reactive({ FREE: false, SOPRANO: false, COMPOSE: false });
-
-const generalFeedbackModalOpen = ref(false);
-const generalFeedbackText = ref("");
-const issueSourceInput = ref("");
-const generalFeedbackEmail = ref("");
-const issueEmailInput = ref("");
 
 let mainLimiter = null;
 let globalSynth = null;
@@ -374,15 +281,6 @@ function initAudioEngine() {
   }
 }
 
-const isUnsolvableDAGErr = computed(() => {
-  return store.debug_message && store.debug_message.includes("=== 启动 DAG 连通性诊断探针 ===");
-});
-
-function isValidEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-}
-
 const modeHelpData = {
   FREE: {
     title: "🎵 自由模式 · 使用规则",
@@ -398,7 +296,7 @@ const modeHelpData = {
     rules: [
       "💡 核心设定：经典旋律逆向配和声。给定指定高音曲线，寻求完美通路。",
       "1. 输入准备：请在下方的输入框中键入形如 'C5 E5 G5' 的音高文本，或直接在上方钢琴键盘点击弹奏录入音符。",
-      "2. 路径生成：确定旋律后点击「生成推演路径」，后端会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。",
+      "2. 路径生成：确定旋律后点击「生成推演路径」，引擎会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。",
       "3. 路径演进：根据下方弹出的候选功能按钮步步向前。如果某一处的声部进行导致断裂无法解开，系统会自动亮起终端帮你诊断违反了哪条传统古典音乐法则。"
     ]
   },
@@ -407,7 +305,7 @@ const modeHelpData = {
     rules: [
       "💡 核心设定：主旋律随心写作，和功能级进配置双重交互前进。",
       "1. 写作顺序：每一步都必须「先」在上方黄色钢琴键盘上点击选定当前步骤所需的「旋律音高」。",
-      "2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被后端过滤并呈现出适合该音符的全部合法和弦。",
+      "2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被引擎过滤并呈现出适合该音符的全部合法和弦。",
       "3. 固化步进：点击对应和弦即可固化四部声部位置，并等待输入下一个旋律音. 所有声部进行均实时接受平行五八度与错位硬性阻断校验。"
     ]
   }
@@ -425,49 +323,6 @@ function closeUpdateReportModal() {
     showHelpModal.value = true;
     seenModes[store.mode] = true;
   }
-}
-
-function openGeneralFeedbackModal() {
-  generalFeedbackText.value = "";
-  generalFeedbackEmail.value = ""; 
-  generalFeedbackModalOpen.value = true;
-}
-
-async function postIssueToBackend(sourceInfo) {
-  try {
-    const payload = {
-      mode: store.mode, key_name: store.key_name,
-      target_melody: store.target_melody, history: store.history,
-      source_info: sourceInfo
-    };
-    const res = await fetch("/api/submit_issue", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    alert(`上报成功: ${data.message}`);
-  } catch (e) {
-    alert("上报数据失败，请确认后端服务运行正常且网络通畅。");
-  }
-}
-
-function submitUnsolvableIssue() {
-  const email = issueEmailInput.value.trim();
-  const source = issueSourceInput.value.trim();
-  if (!email || !isValidEmail(email)) { alert("❌ 格式错误：请输入正确的有效电子邮箱地址！"); return; }
-  if (!source) { alert("❌ 提报拒绝：请填写具体教材或题目出处！"); return; }
-  postIssueToBackend(`[联系人: ${email}] | [断链错题] ${source}`);
-  issueSourceInput.value = ""; issueEmailInput.value = "";
-  store.debug_message = null; 
-}
-
-function submitGeneralFeedback() {
-  const email = generalFeedbackEmail.value.trim();
-  const text = generalFeedbackText.value.trim();
-  if (!email || !isValidEmail(email)) { alert("❌ 格式错误：请输入正确的有效电子邮箱地址！"); return; }
-  if (!text) { alert("❌ 提报拒绝：反馈描述内容不能为空！"); return; }
-  postIssueToBackend(`[联系人: ${email}] | [功能反馈] ${text}`);
-  generalFeedbackModalOpen.value = false;
 }
 
 watch(() => store.mode, (newMode) => {
@@ -534,31 +389,11 @@ function parseMelodyStr(text) {
 function rewindTo(index) {
   store.history = store.history.slice(0, index + 1);
   store.pending_note = null;
-  syncBackend();
+  sync_state();
 }
 
 function closeDebugModal() {
   store.debug_message = null;
-}
-
-async function syncBackend(action_chord = null) {
-  store.debug_message = null; 
-  try {
-    const payload = {
-      mode: store.mode, key_name: store.key_name,
-      target_melody: store.target_melody, history: store.history,
-      pending_note: store.pending_note, action_chord: action_chord
-    };
-    const res = await fetch("/api/sync_state", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    Object.assign(store, data);
-    if (action_chord && store.history.length > 0) { playSingleChord(store.history[store.history.length - 1].voices); }
-  } catch (e) {
-    alert("无法连接到 Python 引擎，请确保 uvicorn 正在运行。");
-  }
 }
 
 async function playSingleChord(voices) {
@@ -594,7 +429,7 @@ async function playSequenceWithPlayhead() {
 function onPianoClick(midi) {
   if (store.mode === 'COMPOSE') {
     store.pending_note = midi;
-    syncBackend();
+    sync_state();
   } else if (store.mode === 'SOPRANO') {
     const noteNames = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
     melodyInput.value += (melodyInput.value ? " " : "") + `${noteNames[midi%12]}${Math.floor(midi/12)-1}`;
@@ -605,11 +440,15 @@ function onPianoClick(midi) {
 
 function startSoprano() {
   store.target_melody = parseMelodyStr(melodyInput.value);
-  if (store.target_melody.length > 0) syncBackend();
+  if (store.target_melody.length > 0) sync_state();
 }
 
-function sendAction(c) { syncBackend(c); }
-function resetState() { store.history = []; store.target_melody = []; store.pending_note = null; store.playbackIndex = null; store.debug_message = null; syncBackend(); }
+function sendAction(c) { 
+  sync_state(c); 
+  if (store.history.length > 0) {
+    playSingleChord(store.history[store.history.length - 1].voices);
+  }
+}
 
 onMounted(() => {
   document.title = "Sposobin Engine 1.0 - 斯波索宾和声写作台";
@@ -622,7 +461,7 @@ onMounted(() => {
     showHelpModal.value = true;
     seenModes.FREE = true;
   }
-  syncBackend();
+  sync_state();
 });
 </script>
 
@@ -653,7 +492,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
 .logo-area { text-align: left; }
 
 .top-right-actions { display: flex; gap: 8px; z-index: 50; flex-wrap: wrap; justify-content: flex-end; }
-.update-top-btn, .feedback-top-btn { border-radius: 8px !important; box-shadow: var(--shadow-sm); padding: 8px 16px !important; font-size: 13px !important; }
+.update-top-btn { border-radius: 8px !important; box-shadow: var(--shadow-sm); padding: 8px 16px !important; font-size: 13px !important; }
 .update-top-btn { background: #0EA5E9; color: white; }
 .update-top-btn:hover { background: #0284C7; }
 
@@ -692,16 +531,6 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
 .update-text { font-size: 13px; color: #475569; line-height: 1.6; margin: 0; }
 .update-list { list-style-type: disc; padding-left: 18px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .update-list li { font-size: 13px; color: #334155; line-height: 1.5; }
-
-.snapshot-preview { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #475569; text-align: left; line-height: 1.7; }
-
-.t-feedback-box { border-top: 1px dashed #444; margin-top: 16px; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; text-align: left; }
-.t-feedback-title { font-size: 13px; color: #F59E0B; font-weight: 600; font-family: sans-serif; }
-.t-feedback-form-stacked { display: flex; flex-direction: column; gap: 8px; }
-.t-feedback-input { background: #2D2D2D; border: 1px solid #444; border-radius: 6px; padding: 8px 12px; color: #FFF; font-size: 13px; font-family: sans-serif; outline: none; box-sizing: border-box; width: 100%; }
-.t-feedback-input:focus { border-color: #F59E0B; }
-.t-feedback-btn { background: #D97706; color: white; border: none; padding: 9px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; cursor: pointer; font-family: sans-serif; transition: 0.2s; width: 100%; text-align: center; }
-.t-feedback-btn:hover { background: #B45309; }
 
 .glass-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
 .highlight-border { border-color: #FCD34D; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.05); }
@@ -782,21 +611,16 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
    📱 移动端适配 (Mobile Responsiveness)
    ========================================= */
 @media screen and (max-width: 768px) {
-  /* 0. 让 Header 在手机端变为上下堆叠，且按钮在上、Logo在下 */
   .app-header {
     flex-direction: column-reverse;
     align-items: center;
   }
-
-  /* 手机端文字和作者信息重新居中 */
   .logo-area {
     text-align: center;
   }
   .author-credits {
     justify-content: center;
   }
-
-  /* 1. 调整顶部操作按钮，取消绝对定位，改为正常流并在顶部居中 */
   .top-right-actions {
     position: static;
     display: flex;
@@ -804,17 +628,13 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
     margin-bottom: 20px;
     width: 100%;
   }
-
-  /* 2. 作者信息允许换行，避免拥挤 */
   .author-credits {
     flex-wrap: wrap;
     line-height: 2;
   }
   .divider {
-    display: none; /* 移动端隐藏竖线，让各个链接自然换行或者并排 */
+    display: none;
   }
-
-  /* 3. 控制面板改为上下排列，占满宽度 */
   .control-panel {
     flex-direction: column;
     gap: 16px;
@@ -830,23 +650,17 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
     padding: 8px 10px;
     font-size: 13px;
   }
-
-  /* 4. 高音题面板（钢琴和输入框）改为上下排列 */
   .soprano-panel {
     flex-direction: column;
     gap: 20px;
     padding: 16px;
   }
-  
-  /* 钢琴键盘在移动端允许横向滚动以防破屏 */
   .piano-wrapper {
     width: 100%;
     overflow-x: auto;
-    padding: 10px 0; /* 为滚动条留出空间 */
+    padding: 10px 0;
     -webkit-overflow-scrolling: touch;
   }
-
-  /* 5. 乐谱区域工具栏适配 */
   .toolbar {
     flex-direction: column;
     gap: 12px;
@@ -857,24 +671,18 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
     width: 100%;
   }
   .btn-group .modern-btn {
-    flex: 1; /* 按钮平分宽度 */
+    flex: 1;
   }
-
-  /* 6. 底部和弦选择面板改为上下排列 */
   .panels-grid {
     flex-direction: column;
     gap: 16px;
   }
-
-  /* 7. 强制修复所有弹窗的宽度，确保不超出屏幕 */
   .help-window, 
   .terminal-window {
     width: 90vw !important;
     max-width: none;
     margin: 0 auto;
   }
-  
-  /* 8. 终端代码字体调小，防止横向撑破 */
   .terminal-body pre {
     font-size: 12px;
   }
