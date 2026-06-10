@@ -71,7 +71,7 @@ defineEmits(['select-chord']);
   border-radius: 0;
   background: #fff;
   padding: 12px;
-  max-height: calc(100dvh - 140px);
+  height: 460px;
   overflow-y: auto;
 }
 
