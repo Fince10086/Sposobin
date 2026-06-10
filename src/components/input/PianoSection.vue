@@ -54,6 +54,20 @@ function handleClick(midi) {
   overflow-x: auto;
 }
 
+/* thin horizontal scrollbar */
+.piano-wrapper::-webkit-scrollbar {
+  height: 3px;
+}
+
+.piano-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.piano-wrapper::-webkit-scrollbar-thumb {
+  background: #000;
+  border-radius: 0;
+}
+
 .piano {
   position: relative;
   height: 100px;

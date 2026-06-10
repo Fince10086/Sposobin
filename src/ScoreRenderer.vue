@@ -392,6 +392,20 @@ function rewindTo(index) {
   overflow: auto hidden;
 }
 
+/* thin horizontal scrollbar */
+.score-container::-webkit-scrollbar {
+  height: 3px;
+}
+
+.score-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.score-container::-webkit-scrollbar-thumb {
+  background: #000;
+  border-radius: 0;
+}
+
 /* SVG 画布 */
 .score-svg {
   display: block;
