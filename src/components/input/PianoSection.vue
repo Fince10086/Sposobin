@@ -1,5 +1,10 @@
 <template>
-  <section :class="['piano-section', { disabled: store.mode === 'FREE' }]">
+  <section 
+    :class="['piano-section', { 
+      disabled: store.mode === 'FREE',
+      inactive: store.mode === 'SOPRANO' && store.history.length > 0 
+    }]"
+  >
     <div class="piano-wrapper">
       <div class="piano">
         <div 
@@ -14,31 +19,44 @@
       </div>
     </div>
 
-    <div v-if="store.mode === 'SOPRANO'" class="soprano-input">
-      <input 
-        type="text" 
-        v-model="melodyInput" 
-        class="text-input" 
-        placeholder="C5 Eb5 G5 ..." 
-      />
-      <button @click="$emit('start-soprano', melodyInput)" class="btn">生成</button>
+    <div v-if="store.mode === 'SOPRANO'" class="soprano-controls">
+      <button 
+        @click="handleUndo" 
+        class="btn btn-undo"
+        :disabled="store.target_melody.length === 0 || store.history.length > 0"
+        title="撤销最后一个音"
+      >
+        ←
+      </button>
+      <button 
+        @click="$emit('start-soprano')" 
+        class="btn btn-generate"
+        :disabled="store.target_melody.length === 0"
+      >
+        生成
+      </button>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { store } from '../../engine/store.js';
 import { usePiano } from '../../composables/usePiano.js';
 
 const { keys: pianoKeys } = usePiano();
-const melodyInput = ref('');
 
-const emit = defineEmits(['piano-click', 'start-soprano']);
+const emit = defineEmits(['piano-click', 'start-soprano', 'undo-note']);
 
 function handleClick(midi) {
   if (store.mode === 'FREE') return;
+  if (store.mode === 'SOPRANO' && store.history.length > 0) return;
   emit('piano-click', midi);
+}
+
+function handleUndo() {
+  if (store.target_melody.length > 0 && store.history.length === 0) {
+    emit('undo-note');
+  }
 }
 </script>
 
@@ -57,6 +75,15 @@ function handleClick(midi) {
 }
 
 .piano-section.disabled .piano-key {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.piano-section.inactive {
+  opacity: 0.4;
+}
+
+.piano-section.inactive .piano-key {
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -114,26 +141,9 @@ function handleClick(midi) {
   font-weight: 600;
 }
 
-.soprano-input {
+.soprano-controls {
   display: flex;
   gap: 0;
-  flex: 1;
-}
-
-.text-input {
-  flex: 1;
-  padding: 6px 12px;
-  border: 2px solid #000;
-  border-radius: 4px 0 0 4px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: var(--font, 'Outfit', sans-serif);
-  outline: none;
-  background: #fff;
-}
-
-.text-input:focus {
-  background: #f8f8f8;
 }
 
 .btn {
@@ -141,8 +151,6 @@ function handleClick(midi) {
   cursor: pointer;
   background: #fff;
   border: 2px solid #000;
-  border-radius: 0 4px 4px 0;
-  margin-left: -2px;
   padding: 6px 16px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -150,9 +158,25 @@ function handleClick(midi) {
   transition: background .15s;
 }
 
-.btn:hover {
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn:hover:not(:disabled) {
   background: #f0f0f0;
   position: relative;
   z-index: 1;
+}
+
+.btn-undo {
+  border-radius: 4px 0 0 4px;
+  min-width: 40px;
+  padding: 6px 8px;
+}
+
+.btn-generate {
+  border-radius: 0 4px 4px 0;
+  margin-left: -2px;
 }
 </style>

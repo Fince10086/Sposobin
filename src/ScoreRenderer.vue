@@ -57,10 +57,9 @@
           <!-- 全音符符头：Bravura U+E0A2，空心椭圆 -->
           <text :x="note.x" :y="note.y" font-size="40" font-family="'Bravura'" text-anchor="middle" 
                 dominant-baseline="central"
-                 :fill="node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : 'transparent')"
-                 :stroke="node.type === 'target' ? '#999' : (node.type === 'pending' ? '#666' : 'none')"
-                :stroke-width="node.type === 'target' ? '1' : '0'"
-                :stroke-dasharray="node.type === 'target' ? '2,2' : 'none'">&#xE0A2;</text>
+                 :fill="node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : '#999')"
+                 :stroke="node.type === 'pending' ? '#666' : 'none'"
+                :stroke-width="node.type === 'pending' ? '1' : '0'">&#xE0A2;</text>
           <!-- 临时升降号：与调号大小一致（font-size: 34） -->
           <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="34" 
                 fill="#000" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>

@@ -32,6 +32,7 @@
         <PianoSection
           @piano-click="handlePianoClick"
           @start-soprano="handleStartSoprano"
+          @undo-note="handleUndoNote"
         />
       </div>
 
@@ -55,7 +56,6 @@ import { store, sync_state, reset_state } from '../engine/store.js';
 import { KEY_REGISTRY } from '../engine/tonality/index.js';
 import { useAudio } from '../composables/useAudio.js';
 import { usePlayback } from '../composables/usePlayback.js';
-import { usePiano } from '../composables/usePiano.js';
 
 import AppHeader from '../components/layout/AppHeader.vue';
 import PianoSection from '../components/input/PianoSection.vue';
@@ -66,7 +66,6 @@ import DebugTerminal from '../components/display/DebugTerminal.vue';
 
 const { playSingleChord } = useAudio();
 const { startPlayback, resetPlayback, isPlaying } = usePlayback();
-const { midiToNoteName } = usePiano();
 
 const keys = Object.keys(KEY_REGISTRY);
 
@@ -101,15 +100,22 @@ function handlePianoClick(midi) {
     store.pending_note = midi;
     sync_state();
   } else if (store.mode === 'SOPRANO') {
-    const input = midiToNoteName(midi);
-    // The PianoSection component handles its own input state
+    // 添加音符到目标旋律
+    store.target_melody.push(midi);
   } else {
     playSingleChord({ S: midi });
   }
 }
 
-function handleStartSoprano(inputText) {
-  // Parse melody and trigger soprano mode
+function handleUndoNote() {
+  if (store.target_melody.length > 0) {
+    store.target_melody.pop();
+  }
+}
+
+function handleStartSoprano() {
+  // 构建DAG并获取候选和弦
+  sync_state();
 }
 
 function handleSelectChord(chord) {
