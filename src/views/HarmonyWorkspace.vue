@@ -149,11 +149,6 @@ function handleSelectChord(chord) {
 
 onMounted(() => {
   document.title = '斯波索宾和声引擎';
-  const hasSeenHelp = localStorage.getItem('seenHelp1.1');
-  if (!hasSeenHelp) {
-    showAboutModal();
-    localStorage.setItem('seenHelp1.1', 'true');
-  }
   sync_state();
 });
 </script>
