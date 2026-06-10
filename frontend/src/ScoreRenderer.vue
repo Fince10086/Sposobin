@@ -92,9 +92,9 @@ import { format_chord_name } from './engine/formatter.js';
 /** 和弦横向间距：每个和弦占 85 像素 */
 const NOTE_SPACING = 85;
 /** 音符起始 X 坐标：谱号、调号之后的位置 */
-const START_X = 112;
+const START_X = 130;
 /** 调号间距：每个升降号间隔 14 像素 */
-const SIG_SPACING = 14;
+const SIG_SPACING = 10;
 
 /** 谱表 Y 坐标配置 */
 const STAFF = {
@@ -359,13 +359,10 @@ function calcLedgers(y, isBass) {
 
 /**
  * 获取变音记号的垂直微调偏移
- * Bravura 字体的降号/重降号视觉中心偏低，需要向上微调
  * @param {string} sym - 变音记号 Bravura 字符
  * @returns {number} dy 偏移量（像素）
  */
 function getAccDy(sym) {
-  if (!sym) return 0;
-  if (sym.includes('\uE260') || sym.includes('\uE264')) return -3;
   return 0;
 }
 
