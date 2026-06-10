@@ -35,7 +35,7 @@
                   class="btn btn-generate"
                   :disabled="store.target_melody.length === 0"
                 >
-                  生成
+                  确认并生成
                 </button>
               </template>
               <button @click="showAboutModal()" class="btn btn-help">?</button>

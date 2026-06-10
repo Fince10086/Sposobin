@@ -62,7 +62,7 @@
                 :stroke-width="node.type === 'pending' ? '1' : '0'">&#xE0A2;</text>
           <!-- 临时升降号：与调号大小一致（font-size: 34） -->
           <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="34" 
-                fill="#000" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
+                :fill="node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : '#999')" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
           <!-- 加线：音符超出谱表时绘制辅助短线 -->
           <line v-for="ly in note.ledgers" :key="ly" :x1="note.x - 15" :y1="ly" :x2="note.x + 15" :y2="ly" 
                 :stroke="node.type === 'target' ? '#999' : '#000'" stroke-width="1.5" />
@@ -275,21 +275,27 @@ const ghostNotes = computed(() => {
 
   // 待输入音符（自由模式/旋律写作模式）
   if (store.pending_note !== null) {
-    const [letter, , , octave] = spell_midi(store.pending_note, ki, '');
+    const [letter, step, alt, octave] = spell_midi(store.pending_note, ki, '');
     const y = PITCH_Y[`${letter}${octave}`] || 90;
+    const keyAlt = keySigAlts.value[step];
+    const acc = alt !== keyAlt ? (ACC_MAP[String(alt)] || '') : '';
+    const accX = acc ? -18 : 0;
     notes.push({
       type: 'pending', chord_display: '?',
-      notes: [{ v: 'S', y, x: 0, acc: '', acc_x: 0, ledgers: calcLedgers(y, false), is_bass: false }],
+      notes: [{ v: 'S', y, x: 0, acc, acc_x: accX, ledgers: calcLedgers(y, false), is_bass: false }],
     });
-  } 
+  }
   // 高音题模式下，显示剩余未填充的目标旋律
   else if (store.target_melody?.length > 0 && store.mode === 'SOPRANO' && store.history.length < store.target_melody.length) {
     for (let i = store.history.length; i < store.target_melody.length; i++) {
-      const [letter, , , octave] = spell_midi(store.target_melody[i], ki, '');
+      const [letter, step, alt, octave] = spell_midi(store.target_melody[i], ki, '');
       const y = PITCH_Y[`${letter}${octave}`] || 90;
+      const keyAlt = keySigAlts.value[step];
+      const acc = alt !== keyAlt ? (ACC_MAP[String(alt)] || '') : '';
+      const accX = acc ? -18 : 0;
       notes.push({
         type: 'target', chord_display: '',
-        notes: [{ v: 'S', y, x: 0, acc: '', acc_x: 0, ledgers: calcLedgers(y, false), is_bass: false }],
+        notes: [{ v: 'S', y, x: 0, acc, acc_x: accX, ledgers: calcLedgers(y, false), is_bass: false }],
       });
     }
   }

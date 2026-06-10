@@ -2,7 +2,6 @@
   <section class="chord-panel">
     <div v-if="isEmpty" class="empty-state">
       <p class="empty-title">{{ emptyTitle }}</p>
-      <p class="empty-desc">{{ emptyDescription }}</p>
     </div>
 
     <div v-else class="panel-content">
@@ -57,17 +56,10 @@ const hasTonicization = computed(() => Object.keys(store.categories.tonicization
 
 const emptyTitle = computed(() => {
   if (store.mode === 'SOPRANO') {
-    return store.target_melody.length > 0 ? '无可用路径' : '等待旋律输入';
+    return store.target_melody.length > 0 ? '无可用路径' : '等待旋律确认中';
   }
   if (store.mode === 'COMPOSE') return '请选定旋律音';
   return '无可用和弦';
-});
-
-const emptyDescription = computed(() => {
-  if (store.mode === 'SOPRANO' && store.target_melody.length > 0) {
-    return '请查看调试终端诊断阻断位置。';
-  }
-  return '按规则完成前置操作。';
 });
 
 defineEmits(['select-chord']);
@@ -90,15 +82,9 @@ defineEmits(['select-chord']);
 
 .empty-title {
   font-size: 0.9375rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #000;
-}
-
-.empty-desc {
-  font-size: 0.8125rem;
-  color: #666;
+  font-weight: 400;
   margin: 0;
+  color: #333;
 }
 
 .panel-content {
