@@ -2,6 +2,9 @@
   <div class="app-container">
     <header class="app-header">
       <div class="top-right-actions">
+        <button @click="showDonateModal = true" class="modern-btn btn-success donate-btn">
+          <span class="icon">🔋</span> 帮服务器续命一天
+        </button>
         <button @click="showUpdateReportModal = true" class="modern-btn btn-primary update-top-btn">
           <span class="icon">🚀</span> 更新公告
         </button>
@@ -11,7 +14,7 @@
       </div>
 
       <div class="logo-area">
-        <h1>Sposobin Engine <span class="badge">1.0</span></h1>
+        <h1>Sposobin Engine <span class="badge">1.1</span></h1>
         <p class="subtitle">斯波索宾和声写作台</p>
         
         <div class="author-credits">
@@ -79,6 +82,33 @@
           </div>
         </section>
       </transition>
+
+    <transition name="modal">
+      <div v-if="showDonateModal" class="help-overlay" @click="showDonateModal = false">
+        <div class="help-window" style="width: 450px;" @click.stop>
+          <div class="help-header" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px;">🔋 帮服务器续命一天</h3>
+            <button class="close-help-btn" style="color: rgba(255,255,255,0.8);" @click="showDonateModal = false">✕</button>
+          </div>
+          <div class="help-body" style="text-align: center; gap: 16px;">
+            <p class="update-text" style="font-size: 15px;">服务器运行和 AI 接口调用都是一笔不小的开销。<br/>如果你觉得本项目有帮助，可以花 <b>1元</b> 请作者喝口水、给服务器续一天命！</p>
+            <div style="display: flex; justify-content: center; margin-top: 10px;">
+              <div style="width: 200px; padding: 15px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <h4 style="margin-bottom: 12px; color: #10B981; font-size: 16px;">微信赞赏</h4>
+                <div style="width: 100%; aspect-ratio: 1; background: #E2E8F0; display: flex; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+                  <img src="./assets/code.png" alt="微信赞赏码" style="width: 100%; height: 100%; object-fit: contain; pointer-events: auto; -webkit-touch-callout: default;" />
+                </div>
+                <p style="color: #64748B; font-size: 13px; margin: 0; line-height: 1.5;">
+                  📱 <b>移动端：</b>长按识别二维码<br/>或保存图片后打开微信扫一扫
+                </p>
+              </div>
+            </div>
+            <p style="color: #94A3B8; font-size: 12px; margin-top: 15px;">扫码金额可自定义，随意金额即可支持项目运行，非常感谢！</p>
+          </div>
+        </div>
+      </div>
+    </transition>
+
 
       <section class="score-section glass-card">
         <div class="toolbar">
@@ -177,13 +207,24 @@
       <div v-if="showUpdateReportModal" class="help-overlay" @click="closeUpdateReportModal">
         <div class="help-window" style="width: 560px;" @click.stop>
           <div class="help-header" style="background: linear-gradient(135deg, #0284C7, #0EA5E9); color: white;">
-            <h3 style="color: white; display: flex; align-items: center; gap: 8px;">🚀 斯波索宾和声写作台 · 1.0 升级报告</h3>
+            <h3 style="color: white; display: flex; align-items: center; gap: 8px;">🚀 斯波索宾和声写作台 · 1.1 升级报告</h3>
             <button class="close-help-btn" style="color: rgba(255,255,255,0.8);" @click="closeUpdateReportModal">✕</button>
           </div>
           <div class="help-body" style="gap: 16px; max-height: 65vh; overflow-y: auto;">
             <div class="update-section">
               <h4 class="update-section-title">🏛️ 平台核心功能概述</h4>
               <p class="update-text">本平台是将经典的<b>斯波索宾《和声学》</b>体系进行完全数字化代码化的智能推演工程。严密把控平行五八度、声部交叉、四部音域约束及非法解决；提供自由级进探索、指定旋律高音题推演、旋律随心写作三大专业模式。</p>
+            </div>
+            
+            
+            <div class="update-section">
+              <h4 class="update-section-title" style="color: #F59E0B;">🚀 1.1 Pro 重磅更新：高阶和声网络扩展与线性流动重构</h4>
+              <ul class="update-list">
+                <li><strong>线性对位引擎重构：</strong>彻底修复并重写了经过与辅助和弦的底层逻辑。完美支持经过四六和弦、自然音七和弦转位（如三四和弦）及二级六和弦的教科书级全平稳线性进行。</li>
+                <li><strong>副功能与离调网络大扩充：</strong>全面实装“副下属和弦”体系；打通了 DTIII → D/VI、SII → DD 等复杂离调路径；首次开放向那不勒斯和弦（N6）的离调进行。</li>
+                <li><strong>变音与特性和弦解锁：</strong>新增对属七和弦附加六音的全面支持与严格物理解决法则；解除增六和弦（It, Ger, Fr）死板的低音束缚；打通导七和弦各转位的特殊属性路径。</li>
+                <li><strong>基础连通性修复：</strong>解决 S6 → D6 连接异常、同和弦转换跳进错误，以及 T6 → N6 后路径突然断链等致命缺陷。</li>
+              </ul>
             </div>
             
             <div class="update-section">
@@ -197,7 +238,7 @@
             </div>
           </div>
           <div class="help-footer">
-            <button class="modern-btn btn-primary" style="background: #0EA5E9; width: 100%; py: 12px;" @click="closeUpdateReportModal">我知道了，开启和声推演</button>
+            <button class="modern-btn btn-primary" style="background: #0EA5E9; width: 100%; padding-top: 12px; padding-bottom: 12px;" @click="closeUpdateReportModal">我知道了，开启和声推演</button>
           </div>
         </div>
       </div>
@@ -240,349 +281,350 @@
             <label class="form-label" style="margin-top: 8px;">您的联系邮箱（必填）：</label>
             <input type="email" v-model="generalFeedbackEmail" class="modern-input" style="border-color: #FCA5A5;" placeholder="请输入您的有效邮箱地址（方便修复后给您回信）" />
 
-                    <label class="form-label" style="margin-top: 4px;">问题或教材错题出处：</label>
-                    <input type="text" v-model="generalFeedbackText" class="modern-input" style="border-color: #FCA5A5;" placeholder="例如：斯波索宾第15章第3题 或 某种特定排列不发声" />
-                  </div>
-                  <div class="help-footer" style="background: #FEF2F2;">
-                    <button class="modern-btn btn-primary" style="background: #EF4444;" @click="submitGeneralFeedback">提交数据快照</button>
-                  </div>
-                </div>
-              </div>
-            </transition>
-
-            <transition name="modal">
-              <div v-if="store.debug_message" class="terminal-overlay" @click="closeDebugModal">
-                <div class="terminal-window" @click.stop>
-                  <div class="terminal-header">
-                    <div class="mac-dots">
-                      <span class="dot red" @click="closeDebugModal"></span>
-                      <span class="dot yellow"></span>
-                      <span class="dot green"></span>
-                    </div>
-                    <div class="terminal-title">bash - DAG_Debugger - 80x24</div>
-                  </div>
-                  <div class="terminal-body">
-                    <pre>{{ store.debug_message }}</pre>
-                    
-                    <div v-if="isUnsolvableDAGErr" class="terminal-feedback-box">
-                      <div class="t-feedback-title">🔍 侦测到连通性死胡同！这首题目无解？提报出处以便优化内核：</div>
-                      <div class="t-feedback-form-stacked">
-                        <input type="email" v-model="issueEmailInput" placeholder="请输入您的有效联系邮箱（必填）" class="t-feedback-input" style="border-color: #555;" />
-                        <input type="text" v-model="issueSourceInput" placeholder="请输入题目出处（例如：教材第25章第4题）" class="t-feedback-input" />
-                        <button @click="submitUnsolvableIssue" class="t-feedback-btn">一键提交后台</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </transition>
+            <label class="form-label" style="margin-top: 4px;">问题或教材错题出处：</label>
+            <input type="text" v-model="generalFeedbackText" class="modern-input" style="border-color: #FCA5A5;" placeholder="例如：斯波索宾第15章第3题 或 某种特定排列不发声" />
           </div>
-        </template>
+          <div class="help-footer" style="background: #FEF2F2;">
+            <button class="modern-btn btn-primary" style="background: #EF4444;" @click="submitGeneralFeedback">提交数据快照</button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-        <script setup>
-        import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
-        import * as Tone from 'tone';
+    <transition name="modal">
+      <div v-if="store.debug_message" class="terminal-overlay" @click="closeDebugModal">
+        <div class="terminal-window" @click.stop>
+          <div class="terminal-header">
+            <div class="mac-dots">
+              <span class="dot red" @click="closeDebugModal"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">bash - DAG_Debugger - 80x24</div>
+          </div>
+          <div class="terminal-body">
+            <pre>{{ store.debug_message }}</pre>
+            
+            <div v-if="isUnsolvableDAGErr" class="terminal-feedback-box">
+              <div class="t-feedback-title">🔍 侦测到连通性死胡同！这首题目无解？提报出处以便优化内核：</div>
+              <div class="t-feedback-form-stacked">
+                <input type="email" v-model="issueEmailInput" placeholder="请输入您的有效联系邮箱（必填）" class="t-feedback-input" style="border-color: #555;" />
+                <input type="text" v-model="issueSourceInput" placeholder="请输入题目出处（例如：教材第25章第4题）" class="t-feedback-input" />
+                <button @click="submitUnsolvableIssue" class="t-feedback-btn">一键提交后台</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </div>
+</template>
 
-        const keys = [
-          "C 大调 (C Major)", "G 大调 (G Major)", "D 大调 (D Major)", "A 大调 (A Major)", "E 大调 (E Major)", "B 大调 (B Major)", "F# 大调 (F# Major)",
-          "F 大调 (F Major)", "Bb 大调 (Bb Major)", "Eb 大调 (Eb Major)", "Ab 大调 (Ab Major)", "Db 大调 (Db Major)", "Gb 大调 (Gb Major)",
-          "a 小调 (a minor)", "e 小调 (e minor)", "b 小调 (b minor)", "f# 小调 (f# minor)", "c# 小调 (c# minor)", "g# 小调 (g# minor)", "d# 小调 (d# minor)",
-          "d 小调 (d minor)", "g 小调 (g minor)", "c 小调 (c minor)", "f 小调 (f minor)", "bb 小调 (bb minor)", "eb 小调 (eb minor)"
-        ];
+<script setup>
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
+import * as Tone from 'tone';
 
-        const store = reactive({
-          mode: "FREE",
-          key_name: "C 大调 (C Major)",
-          target_melody: [],
-          history: [],
-          pending_note: null,
-          renderData: { sigs: [], nodes: [] },
-          categories: { diatonic: {}, tonicization: {} },
-          playbackIndex: null,
-          debug_message: null
-        });
+const keys = [
+  "C 大调 (C Major)", "G 大调 (G Major)", "D 大调 (D Major)", "A 大调 (A Major)", "E 大调 (E Major)", "B 大调 (B Major)", "F# 大调 (F# Major)",
+  "F 大调 (F Major)", "Bb 大调 (Bb Major)", "Eb 大调 (Eb Major)", "Ab 大调 (Ab Major)", "Db 大调 (Db Major)", "Gb 大调 (Gb Major)",
+  "a 小调 (a minor)", "e 小调 (e minor)", "b 小调 (b minor)", "f# 小调 (f# minor)", "c# 小调 (c# minor)", "g# 小调 (g# minor)", "d# 小调 (d# minor)",
+  "d 小调 (d minor)", "g 小调 (g minor)", "c 小调 (c minor)", "f 小调 (f minor)", "bb 小调 (bb minor)", "eb 小调 (eb minor)"
+];
 
-        const melodyInput = ref("");
-        const scoreContainerRef = ref(null);
+const store = reactive({
+  mode: "FREE",
+  key_name: "C 大调 (C Major)",
+  target_melody: [],
+  history: [],
+  pending_note: null,
+  renderData: { sigs: [], nodes: [] },
+  categories: { diatonic: {}, tonicization: {} },
+  playbackIndex: null,
+  debug_message: null
+});
 
-        const showUpdateReportModal = ref(false);
-        const showHelpModal = ref(false);
-        const currentHelpMode = ref("FREE");
-        const seenModes = reactive({ FREE: false, SOPRANO: false, COMPOSE: false });
+const melodyInput = ref("");
+const scoreContainerRef = ref(null);
 
-        const generalFeedbackModalOpen = ref(false);
-        const generalFeedbackText = ref("");
-        const issueSourceInput = ref("");
-        const generalFeedbackEmail = ref("");
-        const issueEmailInput = ref("");
+const showUpdateReportModal = ref(false);
+const showDonateModal = ref(false);
+const showHelpModal = ref(false);
+const currentHelpMode = ref("FREE");
+const seenModes = reactive({ FREE: false, SOPRANO: false, COMPOSE: false });
 
-        let mainLimiter = null;
-        let globalSynth = null;
+const generalFeedbackModalOpen = ref(false);
+const generalFeedbackText = ref("");
+const issueSourceInput = ref("");
+const generalFeedbackEmail = ref("");
+const issueEmailInput = ref("");
 
-        function initAudioEngine() {
-          if (!mainLimiter) {
-            mainLimiter = new Tone.Limiter(-1).toDestination();
-          }
-          if (!globalSynth) {
-            globalSynth = new Tone.PolySynth(Tone.Synth, {
-              oscillator: { type: "custom", partials: [1, 0.5] },
-              envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 1.5 },
-              volume: -14 
-            }).connect(mainLimiter);
-          }
-        }
+let mainLimiter = null;
+let globalSynth = null;
 
-        const isUnsolvableDAGErr = computed(() => {
-          return store.debug_message && store.debug_message.includes("=== 启动 DAG 连通性诊断探针 ===");
-        });
+function initAudioEngine() {
+  if (!mainLimiter) {
+    mainLimiter = new Tone.Limiter(-1).toDestination();
+  }
+  if (!globalSynth) {
+    globalSynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "custom", partials: [1, 0.5] },
+      envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 1.5 },
+      volume: -14 
+    }).connect(mainLimiter);
+  }
+}
 
-        function isValidEmail(email) {
-          const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return regex.test(email);
-        }
+const isUnsolvableDAGErr = computed(() => {
+  return store.debug_message && store.debug_message.includes("=== 启动 DAG 连通性诊断探针 ===");
+});
 
-        const modeHelpData = {
-          FREE: {
-            title: "🎵 自由模式 · 使用规则",
-            rules: [
-              "💡 核心设定：完全无拘无束地自由探索斯波索宾功能级进。",
-              "1. 解锁控制：你可以在该模式下任意切换左侧全局调性（换调将自动清空画板）。",
-              "2. 极速算力：点击下方亮起的功能按钮，引擎会秒级为你算出教科书级的四部和声声部排列。",
-              "3. 状态回溯：直接在五线谱上点击任意历史和弦，可以直接将其执行「断点回退」修改。"
-            ]
-          },
-          SOPRANO: {
-            title: "⚡ 高音题模式 · 使用规则",
-            rules: [
-              "💡 核心设定：经典旋律逆向配和声。给定指定高音曲线，寻求完美通路。",
-              "1. 输入准备：请在下方的输入框中键入形如 'C5 E5 G5' 的音高文本，或直接在上方钢琴键盘点击弹奏录入音符。",
-              "2. 路径生成：确定旋律后点击「生成推演路径」，后端会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。",
-              "3. 路径演进：根据下方弹出的候选功能按钮步步向前。如果某一处的声部进行导致断裂无法解开，系统会自动亮起终端帮你诊断违反了哪条传统古典音乐法则。"
-            ]
-          },
-          COMPOSE: {
-            title: "🎹 旋律写作模式 · 使用规则",
-            rules: [
-              "💡 核心设定：主旋律随心写作，和功能级进配置双重交互前进。",
-              "1. 写作顺序：每一步都必须「先」在上方黄色钢琴键盘上点击选定当前步骤所需的「旋律音高」。",
-              "2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被后端过滤并呈现出适合该音符的全部合法和弦。",
-              "3. 固化步进：点击对应和弦即可固化四部声部位置，并等待输入下一个旋律音. 所有声部进行均实时接受平行五八度与错位硬性阻断校验。"
-            ]
-          }
-        };
+function isValidEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
 
-        function openHelpModal() {
-          currentHelpMode.value = store.mode;
-          showHelpModal.value = true;
-        }
+const modeHelpData = {
+  FREE: {
+    title: "🎵 自由模式 · 使用规则",
+    rules: [
+      "💡 核心设定：完全无拘无束地自由探索斯波索宾功能级进。",
+      "1. 解锁控制：你可以在该模式下任意切换左侧全局调性（换调将自动清空画板）。",
+      "2. 极速算力：点击下方亮起的功能按钮，引擎会秒级为你算出教科书级的四部和声声部排列。",
+      "3. 状态回溯：直接在五线谱上点击任意历史和弦，可以直接将其执行「断点回退」修改。"
+    ]
+  },
+  SOPRANO: {
+    title: "⚡ 高音题模式 · 使用规则",
+    rules: [
+      "💡 核心设定：经典旋律逆向配和声。给定指定高音曲线，寻求完美通路。",
+      "1. 输入准备：请在下方的输入框中键入形如 'C5 E5 G5' 的音高文本，或直接在上方钢琴键盘点击弹奏录入音符。",
+      "2. 路径生成：确定旋律后点击「生成推演路径」，后端会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。",
+      "3. 路径演进：根据下方弹出的候选功能按钮步步向前。如果某一处的声部进行导致断裂无法解开，系统会自动亮起终端帮你诊断违反了哪条传统古典音乐法则。"
+    ]
+  },
+  COMPOSE: {
+    title: "🎹 旋律写作模式 · 使用规则",
+    rules: [
+      "💡 核心设定：主旋律随心写作，和功能级进配置双重交互前进。",
+      "1. 写作顺序：每一步都必须「先」在上方黄色钢琴键盘上点击选定当前步骤所需的「旋律音高」。",
+      "2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被后端过滤并呈现出适合该音符的全部合法和弦。",
+      "3. 固化步进：点击对应和弦即可固化四部声部位置，并等待输入下一个旋律音. 所有声部进行均实时接受平行五八度与错位硬性阻断校验。"
+    ]
+  }
+};
 
-        function closeUpdateReportModal() {
-          showUpdateReportModal.value = false;
-          if (!seenModes[store.mode]) {
-            currentHelpMode.value = store.mode;
-            showHelpModal.value = true;
-            seenModes[store.mode] = true;
-          }
-        }
+function openHelpModal() {
+  currentHelpMode.value = store.mode;
+  showHelpModal.value = true;
+}
 
-        function openGeneralFeedbackModal() {
-          generalFeedbackText.value = "";
-          generalFeedbackEmail.value = ""; 
-          generalFeedbackModalOpen.value = true;
-        }
+function closeUpdateReportModal() {
+  showUpdateReportModal.value = false;
+  if (!seenModes[store.mode]) {
+    currentHelpMode.value = store.mode;
+    showHelpModal.value = true;
+    seenModes[store.mode] = true;
+  }
+}
 
-        async function postIssueToBackend(sourceInfo) {
-          try {
-            const payload = {
-              mode: store.mode, key_name: store.key_name,
-              target_melody: store.target_melody, history: store.history,
-              source_info: sourceInfo
-            };
-            const res = await fetch("/api/submit_issue", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            alert(`上报成功: ${data.message}`);
-          } catch (e) {
-            alert("上报数据失败，请确认后端服务运行正常且网络通畅。");
-          }
-        }
+function openGeneralFeedbackModal() {
+  generalFeedbackText.value = "";
+  generalFeedbackEmail.value = ""; 
+  generalFeedbackModalOpen.value = true;
+}
 
-        function submitUnsolvableIssue() {
-          const email = issueEmailInput.value.trim();
-          const source = issueSourceInput.value.trim();
-          if (!email || !isValidEmail(email)) { alert("❌ 格式错误：请输入正确的有效电子邮箱地址！"); return; }
-          if (!source) { alert("❌ 提报拒绝：请填写具体教材或题目出处！"); return; }
-          postIssueToBackend(`[联系人: ${email}] | [断链错题] ${source}`);
-          issueSourceInput.value = ""; issueEmailInput.value = "";
-          store.debug_message = null; 
-        }
+async function postIssueToBackend(sourceInfo) {
+  try {
+    const payload = {
+      mode: store.mode, key_name: store.key_name,
+      target_melody: store.target_melody, history: store.history,
+      source_info: sourceInfo
+    };
+    const res = await fetch("http://127.0.0.1:8000/api/submit_issue", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    alert(`上报成功: ${data.message}`);
+  } catch (e) {
+    alert("上报数据失败，请确认后端服务运行正常且网络通畅。");
+  }
+}
 
-        function submitGeneralFeedback() {
-          const email = generalFeedbackEmail.value.trim();
-          const text = generalFeedbackText.value.trim();
-          if (!email || !isValidEmail(email)) { alert("❌ 格式错误：请输入正确的有效电子邮箱地址！"); return; }
-          if (!text) { alert("❌ 提报拒绝：反馈描述内容不能为空！"); return; }
-          postIssueToBackend(`[联系人: ${email}] | [功能反馈] ${text}`);
-          generalFeedbackModalOpen.value = false;
-        }
+function submitUnsolvableIssue() {
+  const email = issueEmailInput.value.trim();
+  const source = issueSourceInput.value.trim();
+  if (!email || !isValidEmail(email)) { alert("❌ 格式错误：请输入正确的有效电子邮箱地址！"); return; }
+  if (!source) { alert("❌ 提报拒绝：请填写具体教材或题目出处！"); return; }
+  postIssueToBackend(`[联系人: ${email}] | [断链错题] ${source}`);
+  issueSourceInput.value = ""; issueEmailInput.value = "";
+  store.debug_message = null; 
+}
 
-        watch(() => store.mode, (newMode) => {
-          if (!seenModes[newMode] && !showUpdateReportModal.value) {
-            currentHelpMode.value = newMode;
-            showHelpModal.value = true;
-            seenModes[newMode] = true;
-          }
-        });
+function submitGeneralFeedback() {
+  const email = generalFeedbackEmail.value.trim();
+  const text = generalFeedbackText.value.trim();
+  if (!email || !isValidEmail(email)) { alert("❌ 格式错误：请输入正确的有效电子邮箱地址！"); return; }
+  if (!text) { alert("❌ 提报拒绝：反馈描述内容不能为空！"); return; }
+  postIssueToBackend(`[联系人: ${email}] | [功能反馈] ${text}`);
+  generalFeedbackModalOpen.value = false;
+}
 
-        const pianoKeys = [];
-        let whiteIndex = 0;
-        for (let m = 57; m <= 84; m++) {
-          const isBlack = ![0, 2, 4, 5, 7, 9, 11].includes(m % 12);
-          if (isBlack) { pianoKeys.push({ midi: m, isBlack: true, x: whiteIndex * 26 - 8 }); } 
-          else { pianoKeys.push({ midi: m, isBlack: false, x: whiteIndex * 26, label: m % 12 === 0 ? `C${Math.floor(m/12)-1}` : '' }); whiteIndex++; }
-        }
+watch(() => store.mode, (newMode) => {
+  if (!seenModes[newMode] && !showUpdateReportModal.value) {
+    currentHelpMode.value = newMode;
+    showHelpModal.value = true;
+    seenModes[newMode] = true;
+  }
+});
 
-        const playheadX = computed(() => {
-          const spacing = 85;
-          const startX = 95 + (store.renderData.sigs.length * 12);
-          if (store.playbackIndex !== null) return startX + store.playbackIndex * spacing;
-          let idx = store.history.length;
-          if (store.target_melody.length > 0 && idx < store.target_melody.length) return startX + idx * spacing;
-          return startX + Math.max(0, store.history.length - 1) * spacing;
-        });
+const pianoKeys = [];
+let whiteIndex = 0;
+for (let m = 57; m <= 84; m++) {
+  const isBlack = ![0, 2, 4, 5, 7, 9, 11].includes(m % 12);
+  if (isBlack) { pianoKeys.push({ midi: m, isBlack: true, x: whiteIndex * 26 - 8 }); } 
+  else { pianoKeys.push({ midi: m, isBlack: false, x: whiteIndex * 26, label: m % 12 === 0 ? `C${Math.floor(m/12)-1}` : '' }); whiteIndex++; }
+}
 
-        watch(playheadX, async (newX) => {
-          await nextTick(); 
-          if (!scoreContainerRef.value) return;
-          const container = scoreContainerRef.value;
-          const containerWidth = container.clientWidth;
-          const goldenRatioOffset = containerWidth * 0.382; 
-          const targetScrollLeft = newX - goldenRatioOffset;
-          if (targetScrollLeft > 0) { container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' }); } 
-          else { container.scrollTo({ left: 0, behavior: 'smooth' }); }
-        });
+const playheadX = computed(() => {
+  const spacing = 85;
+  const startX = 95 + (store.renderData.sigs.length * 12);
+  if (store.playbackIndex !== null) return startX + store.playbackIndex * spacing;
+  let idx = store.history.length;
+  if (store.target_melody.length > 0 && idx < store.target_melody.length) return startX + idx * spacing;
+  return startX + Math.max(0, store.history.length - 1) * spacing;
+});
 
-        function getAccDy(sym) {
-          if (!sym) return 0;
-          if (sym.includes('♭')) return -6; 
-          if (sym.includes('♯')) return 1;  
-          return 0; 
-        }
+watch(playheadX, async (newX) => {
+  await nextTick(); 
+  if (!scoreContainerRef.value) return;
+  const container = scoreContainerRef.value;
+  const containerWidth = container.clientWidth;
+  const goldenRatioOffset = containerWidth * 0.382; 
+  const targetScrollLeft = newX - goldenRatioOffset;
+  if (targetScrollLeft > 0) { container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' }); } 
+  else { container.scrollTo({ left: 0, behavior: 'smooth' }); }
+});
 
-        function parseMelodyStr(text) {
-          const noteNames = { 'C':0, 'D':2, 'E':4, 'F':5, 'G':7, 'A':9, 'B':11 };
-          const tokens = text.match(/([A-Ga-g])(bb|b|♭|##|x|#|♯)?\s*(\d)/g);
-          if (!tokens) return [];
-          return tokens.map(token => {
-            const match = token.match(/([A-Ga-g])(bb|b|♭|##|x|#|♯)?\s*(\d)/);
-            const base = noteNames[match[1].toUpperCase()];
-            let alt = 0;
-            if (match[2]) {
-              if (['#', '♯'].includes(match[2])) alt = 1;
-              else if (['##', 'x'].includes(match[2])) alt = 2;
-              else if (['b', '♭'].includes(match[2])) alt = -1;
-              else if (match[2] === 'bb') alt = -2;
-            }
-            return (parseInt(match[3], 10) + 1) * 12 + base + alt;
-          });
-        }
+function getAccDy(sym) {
+  if (!sym) return 0;
+  if (sym.includes('♭')) return -6; 
+  if (sym.includes('♯')) return 1;  
+  return 0; 
+}
 
-        function rewindTo(index) {
-          store.history = store.history.slice(0, index + 1);
-          store.pending_note = null;
-          syncBackend();
-        }
+function parseMelodyStr(text) {
+  const noteNames = { 'C':0, 'D':2, 'E':4, 'F':5, 'G':7, 'A':9, 'B':11 };
+  const tokens = text.match(/([A-Ga-g])(bb|b|♭|##|x|#|♯)?\s*(\d)/g);
+  if (!tokens) return [];
+  return tokens.map(token => {
+    const match = token.match(/([A-Ga-g])(bb|b|♭|##|x|#|♯)?\s*(\d)/);
+    const base = noteNames[match[1].toUpperCase()];
+    let alt = 0;
+    if (match[2]) {
+      if (['#', '♯'].includes(match[2])) alt = 1;
+      else if (['##', 'x'].includes(match[2])) alt = 2;
+      else if (['b', '♭'].includes(match[2])) alt = -1;
+      else if (match[2] === 'bb') alt = -2;
+    }
+    return (parseInt(match[3], 10) + 1) * 12 + base + alt;
+  });
+}
 
-        function closeDebugModal() {
-          store.debug_message = null;
-        }
+function rewindTo(index) {
+  store.history = store.history.slice(0, index + 1);
+  store.pending_note = null;
+  syncBackend();
+}
 
-        async function syncBackend(action_chord = null) {
-          store.debug_message = null; 
-          try {
-            const payload = {
-              mode: store.mode, key_name: store.key_name,
-              target_melody: store.target_melody, history: store.history,
-              pending_note: store.pending_note, action_chord: action_chord
-            };
-            const res = await fetch("/api/sync_state", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            Object.assign(store, data);
-            if (action_chord && store.history.length > 0) { playSingleChord(store.history[store.history.length - 1].voices); }
-          } catch (e) {
-            alert("无法连接到 Python 引擎，请确保 uvicorn 正在运行。");
-          }
-        }
+function closeDebugModal() {
+  store.debug_message = null;
+}
 
-        async function playSingleChord(voices) {
-          await Tone.start();
-          initAudioEngine();
-          const freqs = Object.values(voices).map(midi => Tone.Frequency(midi, "midi").toFrequency());
-          globalSynth.triggerAttackRelease(freqs, "2n");
-        }
+async function syncBackend(action_chord = null) {
+  store.debug_message = null; 
+  try {
+    const payload = {
+      mode: store.mode, key_name: store.key_name,
+      target_melody: store.target_melody, history: store.history,
+      pending_note: store.pending_note, action_chord: action_chord
+    };
+    const res = await fetch("http://127.0.0.1:8000/api/sync_state", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    Object.assign(store, data);
+    if (action_chord && store.history.length > 0) { playSingleChord(store.history[store.history.length - 1].voices); }
+  } catch (e) {
+    alert("无法连接到 Python 引擎，请确保 uvicorn 正在运行。");
+  }
+}
 
-        async function playSequenceWithPlayhead() {
-          if (store.history.length === 0) return;
-          await Tone.start();
-          initAudioEngine();
-          Tone.Transport.cancel(); 
-          const seqSynth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "custom", partials: [1, 0.5] },
-            envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 1.5 },
-            volume: -14
-          }).connect(mainLimiter);
-          const now = Tone.now();
-          const duration = 1.0; 
-          store.history.forEach((item, index) => {
-            const freqs = Object.values(item.voices).map(midi => Tone.Frequency(midi, "midi").toFrequency());
-            seqSynth.triggerAttackRelease(freqs, duration, now + index * duration);
-            setTimeout(() => {
-              store.playbackIndex = index;
-              if (index === store.history.length - 1) setTimeout(() => { store.playbackIndex = null; }, duration * 1000);
-            }, index * duration * 1000);
-          });
-          setTimeout(() => { seqSynth.dispose(); }, (store.history.length * duration + 2) * 1000);
-        }
+async function playSingleChord(voices) {
+  await Tone.start();
+  initAudioEngine();
+  const freqs = Object.values(voices).map(midi => Tone.Frequency(midi, "midi").toFrequency());
+  globalSynth.triggerAttackRelease(freqs, "2n");
+}
 
-        function onPianoClick(midi) {
-          if (store.mode === 'COMPOSE') {
-            store.pending_note = midi;
-            syncBackend();
-          } else if (store.mode === 'SOPRANO') {
-            const noteNames = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
-            melodyInput.value += (melodyInput.value ? " " : "") + `${noteNames[midi%12]}${Math.floor(midi/12)-1}`;
-          } else {
-            playSingleChord({'S': midi}); 
-          }
-        }
+async function playSequenceWithPlayhead() {
+  if (store.history.length === 0) return;
+  await Tone.start();
+  initAudioEngine();
+  Tone.Transport.cancel(); 
+  const seqSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "custom", partials: [1, 0.5] },
+    envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 1.5 },
+    volume: -14
+  }).connect(mainLimiter);
+  const now = Tone.now();
+  const duration = 1.0; 
+  store.history.forEach((item, index) => {
+    const freqs = Object.values(item.voices).map(midi => Tone.Frequency(midi, "midi").toFrequency());
+    seqSynth.triggerAttackRelease(freqs, duration, now + index * duration);
+    setTimeout(() => {
+      store.playbackIndex = index;
+      if (index === store.history.length - 1) setTimeout(() => { store.playbackIndex = null; }, duration * 1000);
+    }, index * duration * 1000);
+  });
+  setTimeout(() => { seqSynth.dispose(); }, (store.history.length * duration + 2) * 1000);
+}
 
-        function startSoprano() {
-          store.target_melody = parseMelodyStr(melodyInput.value);
-          if (store.target_melody.length > 0) syncBackend();
-        }
+function onPianoClick(midi) {
+  if (store.mode === 'COMPOSE') {
+    store.pending_note = midi;
+    syncBackend();
+  } else if (store.mode === 'SOPRANO') {
+    const noteNames = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
+    melodyInput.value += (melodyInput.value ? " " : "") + `${noteNames[midi%12]}${Math.floor(midi/12)-1}`;
+  } else {
+    playSingleChord({'S': midi}); 
+  }
+}
 
-        function sendAction(c) { syncBackend(c); }
-        function resetState() { store.history = []; store.target_melody = []; store.pending_note = null; store.playbackIndex = null; store.debug_message = null; syncBackend(); }
+function startSoprano() {
+  store.target_melody = parseMelodyStr(melodyInput.value);
+  if (store.target_melody.length > 0) syncBackend();
+}
 
-        onMounted(() => {
-          document.title = "Sposobin Engine 1.0 - 斯波索宾和声写作台";
-          const hasSeenUpdate = localStorage.getItem("seenUpdateReport1.0");
-          if (!hasSeenUpdate) {
-            showUpdateReportModal.value = true;
-            localStorage.setItem("seenUpdateReport1.0", "true");
-          } else {
-            currentHelpMode.value = "FREE";
-            showHelpModal.value = true;
-            seenModes.FREE = true;
-          }
-          syncBackend();
-        });
-        </script>
+function sendAction(c) { syncBackend(c); }
+function resetState() { store.history = []; store.target_melody = []; store.pending_note = null; store.playbackIndex = null; store.debug_message = null; syncBackend(); }
+
+onMounted(() => {
+  document.title = "Sposobin Engine 1.0 - 斯波索宾和声写作台";
+  const hasSeenUpdate = localStorage.getItem("seenUpdateReport1.0");
+  if (!hasSeenUpdate) {
+    showUpdateReportModal.value = true;
+    localStorage.setItem("seenUpdateReport1.0", "true");
+  } else {
+    currentHelpMode.value = "FREE";
+    showHelpModal.value = true;
+    seenModes.FREE = true;
+  }
+  syncBackend();
+});
+</script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -606,9 +648,11 @@
 body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px 0; -webkit-font-smoothing: antialiased; }
 .app-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-.app-header { margin-bottom: 24px; text-align: center; position: relative; }
+.app-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
 
-.top-right-actions { position: absolute; right: 10px; top: 10px; z-index: 50; display: flex; gap: 8px; }
+.logo-area { text-align: left; }
+
+.top-right-actions { display: flex; gap: 8px; z-index: 50; flex-wrap: wrap; justify-content: flex-end; }
 .update-top-btn, .feedback-top-btn { border-radius: 8px !important; box-shadow: var(--shadow-sm); padding: 8px 16px !important; font-size: 13px !important; }
 .update-top-btn { background: #0EA5E9; color: white; }
 .update-top-btn:hover { background: #0284C7; }
@@ -617,7 +661,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
 .badge { font-size: 12px; background: linear-gradient(135deg, #F59E0B, #EF4444); color: white; padding: 4px 10px; border-radius: 99px; vertical-align: middle; margin-left: 8px; font-weight: 600; }
 .subtitle { color: var(--text-muted); font-size: 16px; font-weight: 500; margin: 0 0 8px 0; letter-spacing: 0.5px; }
 
-.author-credits { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; }
+.author-credits { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-top: 12px; }
 .author-name { font-weight: 600; color: var(--text-main); }
 .divider { color: #CBD5E1; }
 .author-link { text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; transition: all 0.2s; }
@@ -733,4 +777,106 @@ body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-c
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .modal-enter-active, .modal-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px) scale(0.95); }
+
+/* =========================================
+   📱 移动端适配 (Mobile Responsiveness)
+   ========================================= */
+@media screen and (max-width: 768px) {
+  /* 0. 让 Header 在手机端变为上下堆叠，且按钮在上、Logo在下 */
+  .app-header {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+
+  /* 手机端文字和作者信息重新居中 */
+  .logo-area {
+    text-align: center;
+  }
+  .author-credits {
+    justify-content: center;
+  }
+
+  /* 1. 调整顶部操作按钮，取消绝对定位，改为正常流并在顶部居中 */
+  .top-right-actions {
+    position: static;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  /* 2. 作者信息允许换行，避免拥挤 */
+  .author-credits {
+    flex-wrap: wrap;
+    line-height: 2;
+  }
+  .divider {
+    display: none; /* 移动端隐藏竖线，让各个链接自然换行或者并排 */
+  }
+
+  /* 3. 控制面板改为上下排列，占满宽度 */
+  .control-panel {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .segmented-control {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .segmented-control label {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  /* 4. 高音题面板（钢琴和输入框）改为上下排列 */
+  .soprano-panel {
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px;
+  }
+  
+  /* 钢琴键盘在移动端允许横向滚动以防破屏 */
+  .piano-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    padding: 10px 0; /* 为滚动条留出空间 */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 5. 乐谱区域工具栏适配 */
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .btn-group {
+    display: flex;
+    width: 100%;
+  }
+  .btn-group .modern-btn {
+    flex: 1; /* 按钮平分宽度 */
+  }
+
+  /* 6. 底部和弦选择面板改为上下排列 */
+  .panels-grid {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 7. 强制修复所有弹窗的宽度，确保不超出屏幕 */
+  .help-window, 
+  .terminal-window {
+    width: 90vw !important;
+    max-width: none;
+    margin: 0 auto;
+  }
+  
+  /* 8. 终端代码字体调小，防止横向撑破 */
+  .terminal-body pre {
+    font-size: 12px;
+  }
+}
 </style>

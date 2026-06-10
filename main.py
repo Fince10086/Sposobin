@@ -423,9 +423,12 @@ class HarmonyApp:
         tonicization_cats = {}
 
         for chord in next_chords:
-            if "/" in chord:
+            if "/" in chord and not chord.startswith(("It", "Ger", "Fr")):
                 target_deg = chord.split("/")[1]
-                cat_name = f"副属和弦结构 (至 {target_deg} 级)"
+                if chord.startswith(("D", "Dᵥᵢᵢ")):
+                    cat_name = f"副属和弦 (至 {target_deg} 级)"
+                else:
+                    cat_name = f"副下属和弦 (至 {target_deg} 级)"
                 if cat_name not in tonicization_cats: tonicization_cats[cat_name] = []
                 tonicization_cats[cat_name].append(chord)
             else:

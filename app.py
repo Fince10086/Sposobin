@@ -14,7 +14,7 @@ from dna import MAJOR_DNA, MINOR_DNA, PITCH_Y
 from engine import build_full_dag, calculate_best_voicing, get_chord_candidates, get_chord_siblings, tuple_to_v, v_to_tuple
 from rules import evaluate_voicing
 
-app = FastAPI(title="Sposobin Harmony Engine V1.0 Pro")
+app = FastAPI(title="Sposobin Harmony Engine V1.1 Pro")
 
 # [管理看板] 核心指标内存计数器
 SERVER_METRICS = {
@@ -441,26 +441,41 @@ def sync_state(req: EngineRequest):
             next_chords = list(active_dna_db.keys())
     else:
         last_item = req.history[-1]
+        
+        # 🌟 修复后的核心处理逻辑，包含全模式的同和弦转换支持 🌟
         if req.mode == "COMPOSE":
             if req.pending_note is not None:
                 last_c, last_v = last_item["chord"], last_item["voices"]
                 possible_nexts = set()
+                # 提取 DNA 定义中的 next 及它们的衍生兄弟
                 for nxt in active_dna_db.get(last_c, {}).get("next", []):
                     possible_nexts.add(nxt)
                     possible_nexts.update(get_chord_siblings(nxt, active_dna_db))
-                base = last_c.split('₆')[0].split('₅')[0].split('₃')[0].split('₂')[0].split('₇')[0]
-                possible_nexts.update([k for k in active_dna_db.keys() if k.split('₆')[0].split('₅')[0].split('₃')[0].split('₂')[0].split('₇')[0] == base and "/" not in k and "/" not in last_c])
+                
+                # 追加自身和弦的兄弟，支持同功能/同和弦内部转换
+                possible_nexts.update(get_chord_siblings(last_c, active_dna_db))
+                
                 for nxt_c in possible_nexts:
                     if nxt_c in active_dna_db:
                         for nxt_v in get_chord_candidates(nxt_c, active_dna_db, req.pending_note):
                             if evaluate_voicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999:
                                 next_chords.append(nxt_c); break
+                                
         elif req.mode == "FREE":
-            raw_nexts = active_dna_db.get(last_item["chord"], {}).get("next", [])
-            for nxt_c in raw_nexts:
+            last_c, last_v = last_item["chord"], last_item["voices"]
+            possible_nexts = set()
+            # 提取 DNA 定义中的 next 及它们的衍生兄弟
+            for nxt in active_dna_db.get(last_c, {}).get("next", []):
+                possible_nexts.add(nxt)
+                possible_nexts.update(get_chord_siblings(nxt, active_dna_db))
+                
+            # 追加自身和弦的兄弟，支持同功能/同和弦内部转换
+            possible_nexts.update(get_chord_siblings(last_c, active_dna_db))
+            
+            for nxt_c in possible_nexts:
                 if nxt_c in active_dna_db:
                     for nxt_v in get_chord_candidates(nxt_c, active_dna_db, None):
-                        if evaluate_voicing(last_item["voices"], nxt_v, last_item["chord"], nxt_c, key_info) < 999999:
+                        if evaluate_voicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999:
                             next_chords.append(nxt_c); break
 
     is_dead_end = False
@@ -485,10 +500,16 @@ def sync_state(req: EngineRequest):
     tonicization = {}
     
     for chord in next_chords:
-        if "/" in chord:
-            cat = f"副属和弦 (至 {chord.split('/')[1]} 级)"
-            if cat not in tonicization: tonicization[cat] = []
-            tonicization[cat].append(chord)
+        if "/" in chord and not chord.startswith(("It", "Ger", "Fr")):
+            target_deg = chord.split('/')[1]
+            if chord.startswith(("D", "Dᵥᵢᵢ")):
+                cat = f"副属和弦 (至 {target_deg} 级)"
+                if cat not in tonicization: tonicization[cat] = []
+                tonicization[cat].append(chord)
+            elif chord.startswith(("S", "s", "Sᵢᵢ", "sᵢᵢ")):
+                cat = f"副下属和弦 (至 {target_deg} 级)"
+                if cat not in tonicization: tonicization[cat] = []
+                tonicization[cat].append(chord)
         else:
             if chord.startswith(("N", "It", "Ger", "Fr")): diatonic["变和弦组 (N / +6)"].append(chord)
             elif chord.startswith("DD"): diatonic["重属功能组 (DD)"].append(chord)
