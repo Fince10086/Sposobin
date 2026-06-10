@@ -3,12 +3,8 @@
     <div v-if="store.debug_message" class="terminal-overlay" @click="$emit('close')">
       <div class="terminal-window" @click.stop>
         <div class="terminal-header">
-          <div class="mac-dots">
-            <span class="dot red" @click="$emit('close')"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-          </div>
-          <div class="terminal-title">bash - DAG_Debugger - 80x24</div>
+          <div class="terminal-title">调试信息</div>
+          <button class="close-btn" @click="$emit('close')">×</button>
         </div>
         <div class="terminal-body">
           <pre>{{ store.debug_message }}</pre>
@@ -24,23 +20,97 @@ defineEmits(['close']);
 </script>
 
 <style scoped>
-.terminal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 999; }
-.terminal-window { width: 700px; max-width: 90vw; background: #1E1E1E; border-radius: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); overflow: hidden; border: 1px solid #333; }
-.terminal-header { background: #2D2D2D; padding: 12px 16px; display: flex; align-items: center; position: relative; }
-.mac-dots { display: flex; gap: 8px; position: absolute; }
-.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; cursor: pointer; transition: 0.2s; }
-.dot:hover { opacity: 0.8; }
-.dot.red { background: #FF5F56; }
-.dot.yellow { background: #FFBD2E; }
-.dot.green { background: #27C93F; }
-.terminal-title { width: 100%; text-align: center; color: #999; font-size: 13px; font-family: monospace; }
-.terminal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
-.terminal-body pre { font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; color: #D4D4D4; line-height: 1.5; margin: 0; white-space: pre-wrap; }
-.modal-enter-active, .modal-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-.modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px) scale(0.95); }
+.terminal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
 
-@media screen and (max-width: 768px) {
-  .terminal-window { width: 90vw !important; max-width: none; margin: 0 auto; }
-  .terminal-body pre { font-size: 12px; }
+.terminal-window {
+  width: 700px;
+  max-width: 100%;
+  max-height: 70vh;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.terminal-header {
+  padding: 10px 16px;
+  border-bottom: 2px solid #000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.terminal-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: #000;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background .15s;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+}
+
+.terminal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.terminal-body pre {
+  font-family: 'Consolas', 'Monaco', ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: #000;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.modal-enter-active, .modal-leave-active {
+  transition: opacity .2s;
+}
+
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
+}
+
+/* thin scrollbar */
+.terminal-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.terminal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+  background: #000;
 }
 </style>

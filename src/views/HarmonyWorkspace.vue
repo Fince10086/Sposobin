@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="workspace">
     <AppHeader 
       @mode-change="handleModeChange" 
       @show-about="showAboutModal('help')"
@@ -7,38 +7,44 @@
     />
 
     <div class="main-layout">
-      <transition name="fade">
-        <PianoSection
-          v-if="store.mode !== 'FREE'"
-          @piano-click="handlePianoClick"
-          @start-soprano="handleStartSoprano"
-        />
-      </transition>
-
-      <section class="score-section glass-card">
-        <div class="toolbar">
-          <div class="toolbar-left">
+      <div class="left-area">
+        <section class="score-section">
+          <div class="toolbar">
             <select v-model="store.key_name" @change="handleReset" class="key-select">
               <option v-for="key in keys" :key="key" :value="key">{{ key }}</option>
             </select>
+            <div class="toolbar-actions">
+              <button 
+                @click="handlePlaySequence" 
+                class="btn" 
+                :class="{ active: isPlaying }"
+                :disabled="store.history.length === 0"
+              >
+                {{ isPlaying ? '停止' : '试听' }}
+              </button>
+              <button @click="handleReset" class="btn">清空</button>
+            </div>
           </div>
-          <div class="toolbar-right">
-            <button @click="handlePlaySequence" class="btn btn-primary" :disabled="store.history.length === 0">
-              试听序列
-            </button>
-            <button @click="handleReset" class="btn btn-danger">
-              清空
-            </button>
-          </div>
-        </div>
 
-        <ScoreRenderer />
-      </section>
+          <ScoreRenderer />
+        </section>
 
-      <ChordPalette @select-chord="handleSelectChord" />
+        <PianoSection
+          @piano-click="handlePianoClick"
+          @start-soprano="handleStartSoprano"
+        />
+      </div>
+
+      <div class="right-area">
+        <ChordPalette @select-chord="handleSelectChord" />
+      </div>
     </div>
 
-    <AboutModal :visible="showAboutModalFlag" :initial-tab="aboutModalTab" @close="closeAboutModal" />
+    <AboutModal 
+      :visible="showAboutModalFlag" 
+      :initial-tab="aboutModalTab" 
+      @close="closeAboutModal" 
+    />
     <DebugTerminal @close="store.debug_message = null" />
   </div>
 </template>
@@ -59,7 +65,7 @@ import AboutModal from '../components/modal/AboutModal.vue';
 import DebugTerminal from '../components/display/DebugTerminal.vue';
 
 const { playSingleChord } = useAudio();
-const { startPlayback, resetPlayback } = usePlayback();
+const { startPlayback, resetPlayback, isPlaying } = usePlayback();
 const { midiToNoteName } = usePiano();
 
 const keys = Object.keys(KEY_REGISTRY);
@@ -104,7 +110,6 @@ function handlePianoClick(midi) {
 
 function handleStartSoprano(inputText) {
   // Parse melody and trigger soprano mode
-  // This needs to be handled - the piano section has its own input
 }
 
 function handleSelectChord(chord) {
@@ -126,135 +131,113 @@ onMounted(() => {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-@font-face {
-  font-family: 'Bravura';
-  src: url('/fonts/Bravura.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+.workspace {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-:root {
-  --bg-color: #F1F5F9;
-  --surface: #FFFFFF;
-  --primary: #0EA5E9;
-  --primary-hover: #0284C7;
-  --text-main: #1E293B;
-  --text-muted: #64748B;
-  --border: #E2E8F0;
-  --danger: #EF4444;
-  --success: #10B981;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+.main-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-main);
-  margin: 0;
-  padding: 16px 0;
-  -webkit-font-smoothing: antialiased;
+.left-area {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.app-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-
-.glass-card {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-  padding: 16px;
-  margin-bottom: 16px;
+.right-area {
+  flex: 0 0 300px;
+  min-width: 0;
 }
 
-.score-section { margin-bottom: 16px; }
+.score-section {
+  background: #fff;
+  overflow: hidden;
+}
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 8px 12px;
   gap: 12px;
 }
 
-.toolbar-left {
+.toolbar-actions {
   display: flex;
-  align-items: center;
-}
-
-.toolbar-right {
-  display: flex;
-  gap: 8px;
+  gap: 0;
 }
 
 .key-select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 13px;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--fg);
   cursor: pointer;
   outline: none;
-  transition: 0.2s;
+  transition: background .15s;
 }
 
-.key-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+.key-select:hover {
+  background: var(--hover);
 }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  border: none;
+  color: var(--fg);
   cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  background: #fff;
+  border: 2px solid var(--border);
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font);
+  transition: background .15s, color .15s;
 }
 
-.btn:active { transform: scale(0.96); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
+.btn:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+  margin-right: -2px;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
+.btn:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 
-.btn-danger {
-  background: white;
-  color: var(--danger);
-  border: 1px solid #FECACA;
+.btn:only-child {
+  border-radius: var(--radius);
+  margin-right: 0;
 }
 
-.btn-danger:hover {
-  background: #FEF2F2;
+.btn:hover:not(:disabled):not(.active) {
+  background: var(--hover);
+  position: relative;
+  z-index: 1;
 }
 
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.btn.active {
+  color: #fff;
+  background: var(--fg);
+}
 
-@media screen and (max-width: 768px) {
-  .toolbar { flex-direction: column; gap: 8px; align-items: stretch; }
-  .toolbar-left, .toolbar-right { width: 100%; }
-  .toolbar-right { justify-content: stretch; }
-  .toolbar-right .btn { flex: 1; }
-  .key-select { width: 100%; }
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-actions .btn:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.toolbar-actions .btn:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 </style>

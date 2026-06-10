@@ -1,28 +1,41 @@
 <template>
-  <section class="categories-panel">
-    <div v-if="isEmpty" class="empty-state-msg glass-card">
-      <div class="empty-icon">?</div>
-      <h3>{{ emptyTitle }}</h3>
-      <p>{{ emptyDescription }}</p>
+  <section class="chord-panel">
+    <div v-if="isEmpty" class="empty-state">
+      <p class="empty-title">{{ emptyTitle }}</p>
+      <p class="empty-desc">{{ emptyDescription }}</p>
     </div>
 
-    <div class="panels-grid" v-else>
-      <div class="left-panel modern-panel" v-if="hasDiatonic">
-        <h3 class="panel-header">自然音阶系统</h3>
-        <div v-for="(chords, title) in store.categories.diatonic" :key="title" class="category-row">
-          <div class="cat-title">{{ title }}</div>
-          <div class="chord-btn-group">
-            <button v-for="c in chords" :key="c" @click="$emit('select-chord', c)" class="modern-chord-btn">{{ c }}</button>
+    <div v-else class="panel-content">
+      <div v-if="hasDiatonic" class="panel-group">
+        <h4 class="group-title">自然音阶</h4>
+        <div v-for="(chords, title) in store.categories.diatonic" :key="title" class="category">
+          <div class="category-label">{{ title }}</div>
+          <div class="chord-grid">
+            <button 
+              v-for="c in chords" 
+              :key="c" 
+              @click="$emit('select-chord', c)" 
+              class="chord-btn"
+            >
+              {{ c }}
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="right-panel modern-panel" v-if="hasTonicization">
-        <h3 class="panel-header" style="color: #8B5CF6;">离调与半音体系</h3>
-        <div v-for="(chords, title) in store.categories.tonicization" :key="title" class="category-row">
-          <div class="cat-title">{{ title }}</div>
-          <div class="chord-btn-group">
-            <button v-for="c in chords" :key="c" @click="$emit('select-chord', c)" class="modern-chord-btn tonic-btn">{{ c }}</button>
+      <div v-if="hasTonicization" class="panel-group">
+        <h4 class="group-title tonic">离调体系</h4>
+        <div v-for="(chords, title) in store.categories.tonicization" :key="title" class="category">
+          <div class="category-label">{{ title }}</div>
+          <div class="chord-grid">
+            <button 
+              v-for="c in chords" 
+              :key="c" 
+              @click="$emit('select-chord', c)" 
+              class="chord-btn tonic"
+            >
+              {{ c }}
+            </button>
           </div>
         </div>
       </div>
@@ -44,40 +57,133 @@ const hasTonicization = computed(() => Object.keys(store.categories.tonicization
 
 const emptyTitle = computed(() => {
   if (store.mode === 'SOPRANO') {
-    return store.target_melody.length > 0 ? '引擎计算中或当前无可用连通路径' : '等待旋律输入';
+    return store.target_melody.length > 0 ? '无可用路径' : '等待旋律输入';
   }
-  if (store.mode === 'COMPOSE') return '请点击上方键盘选定起始音';
-  return '引擎校验中，当前路径封锁';
+  if (store.mode === 'COMPOSE') return '请选定旋律音';
+  return '无可用和弦';
 });
 
 const emptyDescription = computed(() => {
   if (store.mode === 'SOPRANO' && store.target_melody.length > 0) {
-    return '请查看下方弹出的调试终端以诊断阻断位置。';
+    return '请查看调试终端诊断阻断位置。';
   }
-  return '请按规则完成前置操作以激活推演算法。';
+  return '按规则完成前置操作。';
 });
 
 defineEmits(['select-chord']);
 </script>
 
 <style scoped>
-.categories-panel { margin-bottom: 20px; }
-.empty-state-msg { text-align: center; padding: 40px 20px; }
-.empty-icon { font-size: 48px; margin-bottom: 16px; }
-.empty-state-msg h3 { color: var(--text-main); margin: 0 0 8px 0; font-size: 16px; }
-.empty-state-msg p { color: var(--text-muted); font-size: 14px; margin: 0; }
-.panels-grid { display: flex; gap: 24px; }
-.modern-panel { flex: 1; background: #F8FAFC; border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--border); }
-.panel-header { margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: var(--primary); }
-.category-row { margin-bottom: 20px; }
-.cat-title { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; text-transform: uppercase; }
-.chord-btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-.modern-chord-btn { background: white; border: 1px solid #BAE6FD; color: #0284C7; padding: 8px 16px; border-radius: 8px; font-family: Georgia, serif; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm); }
-.modern-chord-btn:hover { background: #F0F9FF; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(14, 165, 233, 0.1); border-color: #7DD3FC; }
-.tonic-btn { border-color: #DDD6FE; color: #6D28D9; }
-.tonic-btn:hover { background: #F5F3FF; border-color: #C4B5FD; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.1); }
+.chord-panel {
+  border: 2px solid #000;
+  border-radius: 4px;
+  background: #fff;
+  padding: 12px;
+  max-height: calc(100dvh - 140px);
+  overflow-y: auto;
+}
 
-@media screen and (max-width: 768px) {
-  .panels-grid { flex-direction: column; gap: 16px; }
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.empty-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #000;
+}
+
+.empty-desc {
+  font-size: 0.8125rem;
+  color: #666;
+  margin: 0;
+}
+
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ccc;
+}
+
+.group-title.tonic {
+  color: #333;
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.chord-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chord-btn {
+  color: #000;
+  cursor: pointer;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background .15s;
+  line-height: 1;
+}
+
+.chord-btn:hover {
+  background: #f0f0f0;
+}
+
+.chord-btn.tonic {
+  border-color: #333;
+  color: #333;
+}
+
+.chord-btn.tonic:hover {
+  background: #f5f5f5;
+}
+
+/* thin scrollbar */
+.chord-panel::-webkit-scrollbar {
+  width: 3px;
+}
+
+.chord-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chord-panel::-webkit-scrollbar-thumb {
+  background: #000;
+  border-radius: 0;
 }
 </style>

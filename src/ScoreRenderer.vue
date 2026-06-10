@@ -50,32 +50,32 @@
         <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="250" rx="8" class="hover-bg" />
         <!-- 和弦名称：显示在谱表下方（如 T、D7、SII 等） -->
         <text v-if="node.type === 'history'" x="0" y="240" text-anchor="middle" font-weight="bold" 
-              font-family="Georgia, serif" font-size="18" fill="#E11D48">{{ node.chord_display }}</text>
+              font-family="Georgia, serif" font-size="18" fill="#000">{{ node.chord_display }}</text>
         
         <!-- 四声部音符：S(女高)、A(女低)、T(男高)、B(男低) -->
         <g v-for="note in node.notes" :key="note.v">
           <!-- 全音符符头：Bravura U+E0A2，空心椭圆 -->
           <text :x="note.x" :y="note.y" font-size="40" font-family="'Bravura'" text-anchor="middle" 
                 dominant-baseline="central"
-                :fill="node.type === 'history' ? '#0F172A' : (node.type === 'pending' ? '#F59E0B' : 'transparent')"
-                :stroke="node.type === 'target' ? '#CBD5E1' : (node.type === 'pending' ? '#D97706' : 'none')"
+                 :fill="node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : 'transparent')"
+                 :stroke="node.type === 'target' ? '#999' : (node.type === 'pending' ? '#666' : 'none')"
                 :stroke-width="node.type === 'target' ? '1' : '0'"
                 :stroke-dasharray="node.type === 'target' ? '2,2' : 'none'">&#xE0A2;</text>
           <!-- 临时升降号：与调号大小一致（font-size: 34） -->
           <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="34" 
-                fill="#0F172A" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
+                fill="#000" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
           <!-- 加线：音符超出谱表时绘制辅助短线 -->
           <line v-for="ly in note.ledgers" :key="ly" :x1="note.x - 15" :y1="ly" :x2="note.x + 15" :y2="ly" 
-                :stroke="node.type === 'target' ? '#CBD5E1' : '#0F172A'" stroke-width="1.5" />
+                :stroke="node.type === 'target' ? '#999' : '#000'" stroke-width="1.5" />
         </g>
       </g>
 
       <!-- 播放头：绿色虚线，标记当前播放位置或下一步输入位置 -->
       <g class="playhead-layer" v-if="store.history.length > 0 || store.target_melody.length > 0 || store.pending_note">
         <!-- 竖线 -->
-        <line :x1="playheadX" y1="15" :x2="playheadX" y2="235" stroke="#10B981" stroke-width="2" stroke-dasharray="4,2" />
+        <line :x1="playheadX" y1="15" :x2="playheadX" y2="235" stroke="#000" stroke-width="2" stroke-dasharray="4,2" />
         <!-- 三角形箭头 -->
-        <polygon :points="`${playheadX-6},15 ${playheadX+6},15 ${playheadX},25`" fill="#10B981" />
+        <polygon :points="`${playheadX-6},15 ${playheadX+6},15 ${playheadX},25`" fill="#000" />
       </g>
     </svg>
   </div>
@@ -107,9 +107,9 @@ const STAFF = {
 /** 颜色配置 */
 const COLORS = {
   /** 谱线、谱号、花括号颜色 */
-  STAFF: '#475569',
+  STAFF: '#000',
   /** 调号、临时升降号颜色 */
-  ACCIDENTAL: '#334155',
+  ACCIDENTAL: '#000',
 };
 
 /** 声部顺序：[声部名, 是否低音谱表] */
@@ -379,10 +379,8 @@ function rewindTo(index) {
 </script>
 
 <style scoped>
-/* 乐谱容器：圆角、边框、背景、横向滚动 */
+/* 乐谱容器 */
 .score-container {
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
   -webkit-user-select: none;
   user-select: none;
   background: #fff;
@@ -405,8 +403,8 @@ function rewindTo(index) {
   transition: all 0.2s;
 }
 
-/* 悬浮背景：鼠标悬停时显示淡蓝色 */
+/* 悬浮背景：鼠标悬停时显示淡灰 */
 .clickable-node:hover .hover-bg {
-  fill: rgba(14, 165, 233, 0.05);
+  fill: rgba(0, 0, 0, 0.04);
 }
 </style>

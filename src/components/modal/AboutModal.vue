@@ -19,11 +19,11 @@
         <div class="modal-body">
           <!-- 更新日志 -->
           <div v-if="activeTab === 'update'" class="tab-content">
-            <div class="content-section">
+            <div class="section">
               <h4>平台概述</h4>
               <p>将经典的<b>斯波索宾《和声学》</b>体系进行完全数字化代码化的智能推演工程。</p>
             </div>
-            <div class="content-section">
+            <div class="section">
               <h4 class="highlight">1.1 Pro 更新内容</h4>
               <ul>
                 <li>线性对位引擎重构：彻底修复经过与辅助和弦的底层逻辑</li>
@@ -55,15 +55,15 @@
 
           <!-- 关于 -->
           <div v-if="activeTab === 'about'" class="tab-content">
-            <div class="content-section">
+            <div class="section">
               <h4>斯波索宾和声引擎</h4>
               <p>基于斯波索宾和声学理论的智能和声写作辅助工具。</p>
             </div>
-            <div class="content-section">
+            <div class="section">
               <h4>作者</h4>
               <p>青槐树的诗</p>
               <div class="author-links">
-                <a href="https://space.bilibili.com/381857406" target="_blank">B站主页</a>
+                <a href="https://space.bilibili.com/381857406" target="_blank">B站</a>
                 <a href="https://github.com/Huaishu61" target="_blank">GitHub</a>
                 <span>QQ群：850900762</span>
               </div>
@@ -86,6 +86,7 @@ const activeTab = ref(props.initialTab);
 watch(() => props.initialTab, (newTab) => {
   if (newTab) activeTab.value = newTab;
 });
+
 const activeMode = ref('FREE');
 
 const tabs = [
@@ -95,27 +96,27 @@ const tabs = [
 ];
 
 const modes = [
-  { key: 'FREE', label: '自由模式' },
-  { key: 'SOPRANO', label: '高音题模式' },
-  { key: 'COMPOSE', label: '旋律写作模式' },
+  { key: 'FREE', label: '自由' },
+  { key: 'SOPRANO', label: '高音题' },
+  { key: 'COMPOSE', label: '旋律写作' },
 ];
 
 const helpData = {
   FREE: [
     '核心设定：完全无拘无束地自由探索斯波索宾功能级进。',
-    '1. 解锁控制：你可以在该模式下任意切换左侧全局调性（换调将自动清空画板）。',
+    '1. 解锁控制：你可以在该模式下任意切换全局调性（换调将自动清空画板）。',
     '2. 极速算力：点击下方亮起的功能按钮，引擎会秒级为你算出教科书级的四部和声声部排列。',
-    '3. 状态回溯：直接在五线谱上点击任意历史和弦，可以直接将其执行「断点回退」修改。'
+    '3. 状态回溯：直接在五线谱上点击任意历史和弦，可以直接将其执行断点回退修改。'
   ],
   SOPRANO: [
     '核心设定：经典旋律逆向配和声。给定指定高音曲线，寻求完美通路。',
     '1. 输入准备：请在下方的输入框中键入形如 C5 Eb5 G5 的音高文本，或直接在上方钢琴键盘点击弹奏录入音符。',
-    '2. 路径生成：确定旋律后点击「生成推演路径」，引擎会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。',
+    '2. 路径生成：确定旋律后点击生成推演路径，引擎会为其全自动算出一条极其牢固的连通拓扑 DAG 图结构。',
     '3. 路径演进：根据下方弹出的候选功能按钮步步向前。如果某一处的声部进行导致断裂无法解开，系统会自动亮起终端帮你诊断违反了哪条传统古典音乐法则。'
   ],
   COMPOSE: [
     '核心设定：主旋律随心写作，和功能级进配置双重交互前进。',
-    '1. 写作顺序：每一步都必须「先」在上方黄色钢琴键盘上点击选定当前步骤所需的「旋律音高」。',
+    '1. 写作顺序：每一步都必须先在上方黄色钢琴键盘上点击选定当前步骤所需的旋律音高。',
     '2. 动态过滤：当敲定旋律音后（谱面上出现黄色问号节点），下方的候选功能组按钮会自动被引擎过滤并呈现出适合该音符的全部合法和弦。',
     '3. 固化步进：点击对应和弦即可固化四部声部位置，并等待输入下一个旋律音。所有声部进行均实时接受平行五八度与错位硬性阻断校验。'
   ]
@@ -128,88 +129,93 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(5px);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal-window {
   width: 560px;
-  max-width: 90vw;
+  max-width: 100%;
   max-height: 80vh;
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  border: 1px solid var(--border);
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
-  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes popIn {
-  from { opacity: 0; transform: translateY(15px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  overflow: hidden;
 }
 
 .modal-header {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid #000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #F8FAFC;
+  flex-shrink: 0;
 }
 
 .modal-tabs {
   display: flex;
-  gap: 4px;
+  gap: 0;
 }
 
 .tab-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
+  padding: 5px 14px;
+  border: 2px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background .15s, color .15s;
 }
 
-.tab-btn:hover {
-  color: var(--text-main);
-  background: rgba(0,0,0,0.03);
+.tab-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.tab-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.tab-btn + .tab-btn {
+  margin-left: -2px;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #f0f0f0;
+  position: relative;
+  z-index: 1;
 }
 
 .tab-btn.active {
-  background: white;
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
+  background: #000;
+  color: #fff;
 }
 
 .close-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 20px;
-  color: var(--text-muted);
+  font-size: 1.5rem;
+  color: #000;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  transition: all 0.2s;
+  border-radius: 4px;
+  transition: background .15s;
 }
 
 .close-btn:hover {
-  background: rgba(0,0,0,0.05);
-  color: var(--danger);
+  background: #f0f0f0;
 }
 
 .modal-body {
@@ -224,80 +230,93 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
   gap: 16px;
 }
 
-.content-section h4 {
+.section h4 {
   margin: 0 0 8px 0;
-  font-size: 14px;
+  font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--primary);
+  color: #000;
 }
 
-.content-section h4.highlight {
-  color: #F59E0B;
+.section h4.highlight {
+  color: #333;
 }
 
-.content-section p {
+.section p {
   margin: 0;
-  font-size: 13px;
-  color: #475569;
+  font-size: 0.8125rem;
+  color: #333;
   line-height: 1.6;
 }
 
-.content-section ul {
+.section ul {
   margin: 8px 0 0 0;
   padding-left: 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.content-section li {
-  font-size: 13px;
-  color: #334155;
+.section li {
+  font-size: 0.8125rem;
+  color: #333;
   line-height: 1.5;
 }
 
 .mode-selector {
   display: flex;
-  gap: 8px;
+  gap: 0;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #ccc;
 }
 
 .mode-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: white;
-  color: var(--text-muted);
-  font-size: 13px;
+  padding: 5px 12px;
+  border: 2px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background .15s, color .15s;
 }
 
-.mode-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.mode-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.mode-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.mode-btn + .mode-btn {
+  margin-left: -2px;
+}
+
+.mode-btn:hover:not(.active) {
+  background: #f0f0f0;
+  position: relative;
+  z-index: 1;
 }
 
 .mode-btn.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: #000;
+  color: #fff;
 }
 
 .help-rules {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rule-line {
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
-  color: #334155;
+  color: #333;
   padding: 8px 12px;
-  background: #F8FAFC;
-  border-radius: 6px;
+  background: #f5f5f5;
+  border-radius: 4px;
 }
 
 .author-links {
@@ -309,8 +328,8 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
 
 .author-links a,
 .author-links span {
-  font-size: 13px;
-  color: var(--primary);
+  font-size: 0.8125rem;
+  color: #000;
   text-decoration: none;
 }
 
@@ -319,18 +338,23 @@ const currentRules = computed(() => helpData[activeMode.value] || helpData.FREE)
 }
 
 .modal-enter-active, .modal-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity .2s;
 }
 
 .modal-enter-from, .modal-leave-to {
   opacity: 0;
-  transform: translateY(20px) scale(0.95);
 }
 
-@media screen and (max-width: 768px) {
-  .modal-window {
-    width: 90vw;
-    max-width: none;
-  }
+/* thin scrollbar */
+.modal-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #000;
 }
 </style>

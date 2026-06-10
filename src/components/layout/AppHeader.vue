@@ -1,33 +1,21 @@
 <template>
   <header class="app-header">
-    <div class="header-left">
-      <h1>斯波索宾和声引擎</h1>
+    <h1>斯波索宾和声引擎</h1>
+
+    <div class="mode-group">
+      <button 
+        v-for="mode in modes" 
+        :key="mode.key"
+        :class="['mode-btn', { active: store.mode === mode.key }]"
+        @click="store.mode = mode.key; $emit('mode-change')"
+      >
+        {{ mode.label }}
+      </button>
     </div>
 
-    <div class="header-center">
-      <div class="segmented-control">
-        <input type="radio" id="mode-free" name="mode" value="FREE" v-model="store.mode" @change="$emit('mode-change')">
-        <label for="mode-free">自由</label>
-        <input type="radio" id="mode-soprano" name="mode" value="SOPRANO" v-model="store.mode" @change="$emit('mode-change')">
-        <label for="mode-soprano">高音题</label>
-        <input type="radio" id="mode-compose" name="mode" value="COMPOSE" v-model="store.mode" @change="$emit('mode-change')">
-        <label for="mode-compose">旋律写作</label>
-      </div>
-    </div>
-
-    <div class="header-right">
-      <div class="header-actions">
-        <button @click="$emit('show-about')" class="header-btn">关于</button>
-        <button @click="$emit('show-update')" class="header-btn">更新</button>
-      </div>
-      <div class="author-info">
-        <span class="author-name">青槐树的诗</span>
-        <div class="author-links">
-          <a href="https://space.bilibili.com/381857406" target="_blank" class="link">B站</a>
-          <a href="https://github.com/Huaishu61" target="_blank" class="link">GitHub</a>
-          <span class="link muted">QQ: 850900762</span>
-        </div>
-      </div>
+    <div class="header-actions">
+      <button @click="$emit('show-about')" class="header-btn">关于</button>
+      <button @click="$emit('show-update')" class="header-btn">更新</button>
     </div>
   </header>
 </template>
@@ -36,6 +24,12 @@
 import { store } from '../../engine/store.js';
 
 defineEmits(['mode-change', 'show-about', 'show-update']);
+
+const modes = [
+  { key: 'FREE', label: '自由' },
+  { key: 'SOPRANO', label: '高音题' },
+  { key: 'COMPOSE', label: '旋律写作' },
+];
 </script>
 
 <style scoped>
@@ -43,148 +37,78 @@ defineEmits(['mode-change', 'show-about', 'show-update']);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  gap: 16px;
 }
 
-.header-left h1 {
-  font-size: 22px;
+h1 {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-main);
   margin: 0;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
-.header-center {
-  flex: 1;
+.mode-group {
   display: flex;
-  justify-content: center;
-  padding: 0 20px;
+  gap: 0;
 }
 
-.segmented-control {
-  display: flex;
-  background: #F1F5F9;
-  padding: 3px;
-  border-radius: 8px;
-}
-
-.segmented-control input[type="radio"] {
-  display: none;
-}
-
-.segmented-control label {
-  padding: 6px 16px;
+.mode-btn {
+  color: #000;
   cursor: pointer;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--text-muted);
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  background: #fff;
+  border: 2px solid #000;
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background .15s, color .15s;
 }
 
-.segmented-control input[type="radio"]:checked + label {
-  background: white;
-  color: var(--primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+.mode-btn:first-child {
+  border-radius: 4px 0 0 4px;
 }
 
-.header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+.mode-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.mode-btn + .mode-btn {
+  margin-left: -2px;
+}
+
+.mode-btn:hover:not(.active) {
+  background: #f0f0f0;
+  position: relative;
+  z-index: 1;
+}
+
+.mode-btn.active {
+  color: #fff;
+  background: #000;
 }
 
 .header-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .header-btn {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: white;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  color: #000;
   cursor: pointer;
-  transition: all 0.2s;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background .15s;
 }
 
 .header-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.author-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.author-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.author-links {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.link {
-  font-size: 11px;
-  color: var(--primary);
-  text-decoration: none;
-  transition: opacity 0.2s;
-}
-
-.link:hover {
-  opacity: 0.7;
-  text-decoration: underline;
-}
-
-.link.muted {
-  color: var(--text-muted);
-}
-
-@media screen and (max-width: 768px) {
-  .app-header {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
-
-  .header-left {
-    text-align: center;
-  }
-
-  .header-center {
-    padding: 0;
-    justify-content: center;
-  }
-
-  .segmented-control label {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  .header-right {
-    align-items: center;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .author-info {
-    align-items: flex-start;
-  }
+  background: #f0f0f0;
 }
 </style>
