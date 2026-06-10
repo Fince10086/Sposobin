@@ -38,3 +38,4 @@ cleanup_temp.py
 _scan.py
 
 dist
+.vite/
