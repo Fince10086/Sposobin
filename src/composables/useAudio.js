@@ -21,6 +21,12 @@ let mainLimiter = null;
  */
 let globalSynth = null;
 
+/** 当前正在播放的序列合成器，用于停止功能 */
+let currentSeqSynth = null;
+
+/** 当前播放的setTimeout句柄 */
+let seqTimeouts = [];
+
 /** 音频引擎初始化状态标记，用于UI显示 */
 const isInitialized = ref(false);
 
@@ -89,8 +95,12 @@ export function useAudio() {
     await Tone.start();
     ensureEngine();
 
+    // 先停止之前的播放
+    stopSequence();
+
     // 为序列播放创建独立的合成器实例，避免与单和弦播放冲突
     const seqSynth = new Tone.PolySynth(Tone.Synth, SYNTH_CONFIG).connect(mainLimiter);
+    currentSeqSynth = seqSynth;
     const now = Tone.now();       // 获取当前音频时间
     const duration = 1.0;         // 每个和弦持续1秒（相当于60 BPM的四分音符）
 
@@ -102,21 +112,44 @@ export function useAudio() {
       seqSynth.triggerAttackRelease(freqs, duration, now + index * duration);
       // 通过setTimeout同步UI播放头位置
       if (onStep) {
-        setTimeout(() => onStep(index), index * duration * 1000);
+        const t = setTimeout(() => onStep(index), index * duration * 1000);
+        seqTimeouts.push(t);
       }
     });
 
     // 序列播放结束后清理资源
     const cleanupDelay = (history.length * duration + 2) * 1000;
-    setTimeout(() => {
+    const t = setTimeout(() => {
+      if (currentSeqSynth === seqSynth) {
+        currentSeqSynth = null;
+      }
       seqSynth.dispose();         // 释放合成器内存
-      if (onStep) setTimeout(() => onStep(null), duration * 1000);
+      if (onStep) {
+        const t2 = setTimeout(() => onStep(null), duration * 1000);
+        seqTimeouts.push(t2);
+      }
     }, cleanupDelay);
+    seqTimeouts.push(t);
+  }
+
+  /**
+   * 停止序列播放
+   * 释放当前序列合成器并清除所有定时器
+   */
+  function stopSequence() {
+    seqTimeouts.forEach(t => clearTimeout(t));
+    seqTimeouts = [];
+    if (currentSeqSynth) {
+      currentSeqSynth.releaseAll();
+      currentSeqSynth.dispose();
+      currentSeqSynth = null;
+    }
   }
 
   return {
     isInitialized,    // 音频初始化状态（响应式）
     playSingleChord,  // 播放单个和弦
-    playSequence      // 播放完整序列
+    playSequence,     // 播放完整序列
+    stopSequence      // 停止序列播放
   };
 }

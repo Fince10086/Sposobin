@@ -141,6 +141,10 @@ function handleReset() {
 
 async function handlePlaySequence() {
   if (store.history.length === 0) return;
+  if (isPlaying.value) {
+    resetPlayback();
+    return;
+  }
   await startPlayback(store.history);
 }
 

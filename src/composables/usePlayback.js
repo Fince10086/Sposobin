@@ -20,7 +20,7 @@ const playbackIndex = ref(null);
  * @returns {Object} 播放状态和控制方法
  */
 export function usePlayback() {
-  const { playSequence } = useAudio();
+  const { playSequence, stopSequence } = useAudio();
 
   /**
    * 是否正在播放的计算属性
@@ -52,6 +52,7 @@ export function usePlayback() {
    * 将播放索引设为 null，停止播放头动画
    */
   function resetPlayback() {
+    stopSequence();
     playbackIndex.value = null;
   }
 
