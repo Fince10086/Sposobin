@@ -221,6 +221,24 @@ const historyNodes = computed(() => {
       yPositions[v] = PITCH_Y[`${letter}${octave}${isBass ? '_bass' : ''}`];
     });
 
+    // 计算同度偏移：同一 Y 上的声部按 SATB 优先级排名，依次右移
+    const voiceRanks = {};
+    const yToVoices = {};
+    VOICE_ORDER.forEach(([v]) => {
+      const y = yPositions[v];
+      if (y == null) return;
+      if (!yToVoices[y]) yToVoices[y] = [];
+      yToVoices[y].push(v);
+    });
+    Object.values(yToVoices).forEach(group => {
+      group.sort((a, b) => {
+        const idxA = VOICE_ORDER.findIndex(([vv]) => vv === a);
+        const idxB = VOICE_ORDER.findIndex(([vv]) => vv === b);
+        return idxA - idxB;
+      });
+      group.forEach((v, rank) => { voiceRanks[v] = rank; });
+    });
+
     // 第三步：确定哪些声部需要绘制临时变音记号
     // 规则：当前变音 ≠ 调号变音 且 ≠ 本小节前面出现过的同音名变音
     const drawnAcc = {};
@@ -243,7 +261,8 @@ const historyNodes = computed(() => {
       const shifted = Object.entries(yPositions).some(
         ([ov, oy]) => ov !== v && oy != null && oy - y === 5
       );
-      const x = shifted ? 13 : 0;
+      const unisonShift = (voiceRanks[v] || 0) * 16;
+      const x = unisonShift + (shifted ? 16 : 0);
 
       // 计算临时变音记号的位置
       let acc = '';
