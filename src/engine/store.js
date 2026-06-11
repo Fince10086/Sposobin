@@ -29,6 +29,7 @@ import { getChordCandidates } from './core/candidateEngine.js';
 import { evaluateVoicing } from './rules/index.js';
 import { buildFullDag } from './core/dagBuilder.js';
 import { calculateBestVoicing } from './core/viterbi.js';
+import { mapChordName, transposeVoices, transposeHistory, transposeMelody } from './core/transposer.js';
 
 // ===== 响应式全局状态 =====
 export const store = reactive({
@@ -461,6 +462,93 @@ export function syncState(action_chord = null) {
  * 重置全局状态
  * 清空所有和声历史、旋律输入和状态标记，恢复到初始状态。
  */
+/**
+ * 全局状态转调
+ * 将当前作品转调至目标调性，支持大小调切换时的和弦功能映射。
+ *
+ * 处理策略:
+ *   - FREE/COMPOSE 模式: 映射和弦名 + 平移 MIDI + 保留历史
+ *   - FREE 模式额外使用 Viterbi 重新优化声部排列
+ *   - SOPRANO/BASS 模式: 平移目标旋律/低音，清空历史（DAG 依赖 MIDI 状态键）
+ *   - 等音调切换（delta=0）: SOPRANO/BASS 保留历史
+ *
+ * @param {string} oldKeyName - 原调性名称
+ * @param {string} newKeyName - 新调性名称
+ */
+export function transposeState(oldKeyName, newKeyName) {
+  const oldKey = KEY_REGISTRY[oldKeyName];
+  const newKey = KEY_REGISTRY[newKeyName];
+
+  if (!oldKey || !newKey) {
+    resetState();
+    return;
+  }
+
+  const delta = newKey.shift - oldKey.shift;
+  const typeChanged = oldKey.type !== newKey.type;
+  const toMinor = newKey.type === 'MINOR';
+
+  // 重置临时状态
+  store.playbackIndex = null;
+  store.replacement_index = null;
+  store.debug_message = null;
+  store.is_completed = false;
+
+  // 清空 DAG 缓存（所有缓存键都包含调性名称）
+  Object.keys(GLOBAL_DAG_CACHE).forEach(key => delete GLOBAL_DAG_CACHE[key]);
+
+  // 平移目标旋律与低音
+  if (store.target_melody.length > 0) {
+    store.target_melody = transposeMelody(store.target_melody, delta);
+  }
+  if (store.target_bass.length > 0) {
+    store.target_bass = transposeMelody(store.target_bass, delta);
+  }
+  if (store.pending_note !== null) {
+    store.pending_note += delta;
+  }
+
+  // 处理 history
+  if (store.history.length > 0) {
+    if (store.mode === 'SOPRANO' || store.mode === 'BASS') {
+      // SOPRANO/BASS: DAG 状态键使用 MIDI 值，非等音转调后失效
+      if (delta !== 0) {
+        store.history = [];
+      }
+      // delta === 0 时保留历史（等音调，如 升F↔降G）
+    } else {
+      // FREE / COMPOSE: 尝试映射和弦 + 平移声部
+      if (typeChanged) {
+        const { history: newHistory, failures } = transposeHistory(store.history, delta, toMinor);
+        if (failures.length > 0) {
+          store.debug_message = `⚠️ 转调提示：以下和弦无法映射到${newKey.type === 'MAJOR' ? '大' : '小'}调，已自动移除：${failures.join('、')}`;
+        }
+        store.history = newHistory;
+      } else {
+        // 同类型调性：仅平移 MIDI
+        store.history = store.history.map(item => ({
+          chord: item.chord,
+          voices: transposeVoices(item.voices, delta),
+        }));
+      }
+
+      // FREE 模式：使用 Viterbi 重新优化全局声部排列
+      if (store.mode === 'FREE' && store.history.length > 1) {
+        const chord_sequence = store.history.map(item => item.chord);
+        const initial_voicing = store.history[0].voices;
+        const key_info = get_key_info();
+        const active_dna_db = get_active_dna();
+        const global_path = calculateBestVoicing(chord_sequence, initial_voicing, active_dna_db, key_info, null);
+        if (global_path) {
+          store.history = chord_sequence.map((c, i) => ({ chord: c, voices: global_path[i] }));
+        }
+      }
+    }
+  }
+
+  syncState();
+}
+
 /**
  * 取消替换模式
  * 恢复被截断的历史记录，回到正常浏览状态。

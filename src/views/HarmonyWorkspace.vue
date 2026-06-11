@@ -8,7 +8,7 @@
       <div class="left-area">
         <section class="score-section">
           <div class="toolbar">
-            <select v-model="store.key_name" @change="handleReset" class="key-select">
+            <select :value="store.key_name" @change="handleKeyChange" class="key-select">
               <option v-for="key in keys" :key="key" :value="key">{{ key }}</option>
             </select>
             <div class="toolbar-actions">
@@ -93,7 +93,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { store, syncState, resetState } from '../engine/store.js';
+import { store, syncState, resetState, transposeState } from '../engine/store.js';
 import { KEY_REGISTRY } from '../engine/tonality/index.js';
 import { useAudio } from '../composables/useAudio.js';
 import { usePlayback } from '../composables/usePlayback.js';
@@ -128,6 +128,16 @@ function showAboutModal() {
 
 function closeAboutModal() {
   showAboutModalFlag.value = false;
+}
+
+function handleKeyChange(event) {
+  const newKey = event.target.value;
+  const oldKey = store.key_name;
+  if (oldKey === newKey) return;
+
+  resetPlayback();
+  store.key_name = newKey;
+  transposeState(oldKey, newKey);
 }
 
 function handleModeChange() {
