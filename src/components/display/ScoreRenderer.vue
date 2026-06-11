@@ -425,10 +425,14 @@ function enterReplaceMode(index) {
   if (index === null || store.replacement_index === index) {
     // null 或再次点击同一节点则取消替换
     store.replacement_index = null;
+    store.pending_note = null;
   } else {
     store.replacement_index = index;
+    // COMPOSE 模式下，设置 pending_note 为对应位置的旋律音
+    if (store.mode === 'COMPOSE' && store.target_melody[index] !== undefined) {
+      store.pending_note = store.target_melody[index];
+    }
   }
-  store.pending_note = null;
   syncState();
 }
 </script>

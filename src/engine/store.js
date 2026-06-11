@@ -280,13 +280,10 @@ export function syncState(action_chord = null) {
     // 如果处于替换模式，先截断历史到替换位置
     if (store.replacement_index !== null) {
       store.history = store.history.slice(0, store.replacement_index);
-      store.replacement_index = null;
-      // 同时清空 target_melody / target_bass 中对应的部分（如果有）
-      if (store.mode === 'SOPRANO') {
-        store.target_melody = store.target_melody.slice(0, store.history.length);
-      } else if (store.mode === 'BASS') {
-        store.target_bass = store.target_bass.slice(0, store.history.length);
+      if (store.mode === 'COMPOSE') {
+        store.target_melody = store.target_melody.slice(0, store.replacement_index);
       }
+      store.replacement_index = null;
     }
 
     if (store.mode === "SOPRANO" && store.target_melody.length > 0) {
@@ -345,27 +342,38 @@ export function syncState(action_chord = null) {
   // ===== 计算下一拍可用的和弦候选 =====
   let next_chords = [];
 
+  // 计算有效历史长度（考虑替换模式）
+  const effectiveLen = store.replacement_index !== null
+    ? store.replacement_index
+    : store.history.length;
+
   if (store.mode === "SOPRANO" && store.target_melody.length > 0) {
-    if (store.history.length === store.target_melody.length) {
+    if (effectiveLen === store.target_melody.length) {
       store.is_completed = true;
     }
     const dag = get_cached_dag(store.key_name, store.target_melody, active_dna_db, key_info);
     if (!dag || dag.length < store.target_melody.length) {
       store.debug_message = runDagProbe(store.target_melody, active_dna_db, key_info, 'S');
     } else {
-      next_chords = extractNextChordsFromDag(dag, store.history, store.target_melody.length);
+      const truncatedHistory = store.replacement_index !== null
+        ? store.history.slice(0, store.replacement_index)
+        : store.history;
+      next_chords = extractNextChordsFromDag(dag, truncatedHistory, store.target_melody.length);
     }
   } else if (store.mode === "BASS" && store.target_bass.length > 0) {
-    if (store.history.length === store.target_bass.length) {
+    if (effectiveLen === store.target_bass.length) {
       store.is_completed = true;
     }
     const dag = get_cached_dag(store.key_name, store.target_bass, active_dna_db, key_info, 'B');
     if (!dag || dag.length < store.target_bass.length) {
       store.debug_message = runDagProbe(store.target_bass, active_dna_db, key_info, 'B');
     } else {
-      next_chords = extractNextChordsFromDag(dag, store.history, store.target_bass.length);
+      const truncatedHistory = store.replacement_index !== null
+        ? store.history.slice(0, store.replacement_index)
+        : store.history;
+      next_chords = extractNextChordsFromDag(dag, truncatedHistory, store.target_bass.length);
     }
-  } else if (store.history.length === 0 || store.replacement_index === 0) {
+  } else if (effectiveLen === 0) {
     // 首拍候选计算
     if (store.mode === "COMPOSE" && store.pending_note !== null) {
       // 筛选包含当前旋律音的和弦
@@ -380,12 +388,14 @@ export function syncState(action_chord = null) {
     }
   } else {
     // 后续拍候选计算（替换模式下基于截断后的最后节点）
-    const effectiveLen = store.replacement_index !== null ? store.replacement_index : store.history.length;
     const last_item = store.history[effectiveLen - 1];
 
     if (store.mode === "COMPOSE") {
-      if (store.pending_note !== null) {
-        // 有旋律音时: 从前一和弦的合法连接中筛选包含该旋律音的
+      // COMPOSE 模式下，替换时从 target_melody 获取对应位置的旋律音
+      const target_note = store.replacement_index !== null
+        ? store.target_melody[store.replacement_index]
+        : store.pending_note;
+      if (target_note !== null) {
         const last_c = last_item.chord;
         const last_v = last_item.voices;
         const possible_nexts = new Set();
@@ -397,7 +407,7 @@ export function syncState(action_chord = null) {
 
         for (const nxt_c of possible_nexts) {
           if (!(nxt_c in active_dna_db)) continue;
-          for (const nxt_v of getChordCandidates(nxt_c, active_dna_db, store.pending_note)) {
+          for (const nxt_v of getChordCandidates(nxt_c, active_dna_db, target_note)) {
             if (evaluateVoicing(last_v, nxt_v, last_c, nxt_c, key_info) < 999999) {
               next_chords.push(nxt_c);
               break;
