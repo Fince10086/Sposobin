@@ -2,8 +2,11 @@
   <!-- 乐谱渲染容器：包含横向滚动支持 -->
   <div class="score-container" ref="scoreContainerRef">
     <!-- SVG 画布：宽度根据音符数量动态计算，最低 900px -->
-    <svg :width="Math.max(750, renderData.nodes.length * NOTE_SPACING + START_X + 60)" 
-         height="270" class="score-svg">
+    <svg :width="Math.max(750, renderData.nodes.length * NOTE_SPACING + START_X + 60)"
+         height="270" class="score-svg"
+         @click="store.replacement_index !== null ? enterReplaceMode(null) : null"
+         :style="store.replacement_index !== null ? 'cursor: default;' : ''">
+
       
       <!-- 谱线系统：高音谱表（5条）+ 低音谱表（5条） -->
       <g class="staff-lines">
@@ -41,16 +44,16 @@
       </g>
 
       <!-- 音符节点：每个和弦一个节点，包含四声部音符 -->
-      <g v-for="(node, index) in renderData.nodes" :key="index" 
+      <g v-for="(node, index) in renderData.nodes" :key="index"
          :transform="`translate(${START_X + keySignatures.length * SIG_SPACING + index * NOTE_SPACING}, 0)`"
          :class="{ 'clickable-node': node.type === 'history' }"
-         @click="node.type === 'history' ? rewindTo(node.original_index) : null">
-        
-        <!-- 可点击背景区：仅历史和弦显示，支持点击回退 -->
-        <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="250" rx="8" class="hover-bg" />
-        <!-- 和弦名称：显示在谱表下方（如 T、D7、SII 等） -->
-        <text v-if="node.type === 'history'" x="0" y="260" text-anchor="middle" font-weight="normal" 
-              font-family="'LCBSposobin'" font-size="22" fill="#000">
+         @click.stop="node.type === 'history' ? enterReplaceMode(node.original_index) : null">
+
+        <!-- 可点击背景区：仅历史和弦显示 -->
+        <rect v-if="node.type === 'history'" x="-25" y="10" width="50" height="250" rx="8" :class="node.isGhost ? 'ghost-bg' : 'hover-bg'" />
+        <!-- 和弦名称：显示在谱表下方 -->
+        <text v-if="node.type === 'history'" x="0" y="260" text-anchor="middle" font-weight="normal"
+              font-family="'LCBSposobin'" font-size="22" :fill="node.isGhost ? '#666' : '#000'">
           <template v-if="typeof node.chord_display === 'object'">
             <tspan>{{ node.chord_display.base }}</tspan>
             <tspan font-size="14" dy="-8" dx="2">{{ node.chord_display.sup }}</tspan>
@@ -59,26 +62,26 @@
             {{ node.chord_display }}
           </template>
         </text>
-        
+
         <!-- 四声部音符：S(女高)、A(女低)、T(男高)、B(男低) -->
         <g v-for="note in node.notes" :key="note.v">
           <!-- 全音符符头：Bravura U+E0A2，空心椭圆 -->
-          <text :x="note.x" :y="note.y" font-size="40" font-family="'Bravura'" text-anchor="middle" 
+          <text :x="note.x" :y="note.y" font-size="40" font-family="'Bravura'" text-anchor="middle"
                 dominant-baseline="central"
-                 :fill="node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : '#999')"
+                 :fill="node.isGhost ? '#888' : (node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : '#999'))"
                  :stroke="node.type === 'pending' ? '#666' : 'none'"
                 :stroke-width="node.type === 'pending' ? '1' : '0'">&#xE0A2;</text>
-          <!-- 临时升降号：与调号大小一致（font-size: 34） -->
-          <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="34" 
-                :fill="node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : '#999')" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
-          <!-- 加线：音符超出谱表时绘制辅助短线 -->
-          <line v-for="ly in note.ledgers" :key="ly" :x1="note.x - 15" :y1="ly" :x2="note.x + 15" :y2="ly" 
-                :stroke="node.type === 'target' ? '#999' : '#000'" stroke-width="1.5" />
+          <!-- 临时升降号 -->
+          <text v-if="note.acc" :x="note.acc_x" :y="note.y" :dy="getAccDy(note.acc)" font-size="34"
+                :fill="node.isGhost ? '#888' : (node.type === 'history' ? '#000' : (node.type === 'pending' ? '#666' : '#999'))" font-family="'Bravura'" dominant-baseline="central">{{ note.acc }}</text>
+          <!-- 加线 -->
+          <line v-for="ly in note.ledgers" :key="ly" :x1="note.x - 15" :y1="ly" :x2="note.x + 15" :y2="ly"
+                :stroke="node.isGhost ? '#bbb' : (node.type === 'target' ? '#999' : '#000')" stroke-width="1.5" />
         </g>
       </g>
 
-      <!-- 播放头：绿色虚线，标记当前播放位置或下一步输入位置 -->
-      <g class="playhead-layer" v-if="store.history.length > 0 || store.target_melody.length > 0 || store.pending_note">
+      <!-- 播放头：半透明矩形背景 -->
+      <g class="playhead-layer" v-if="store.history.length > 0 || store.target_melody.length > 0 || store.pending_note || store.replacement_index !== null">
         <rect :x="playheadX - 25" y="10" width="50" height="250" rx="8" fill="rgba(0, 0, 0, 0.04)" />
       </g>
     </svg>
@@ -206,7 +209,8 @@ const historyNodes = computed(() => {
 
   return store.history.map((item, index) => {
     const { chord, voices } = item;
-    const node = { type: 'history', chord_display: formatChordName(chord), notes: [], original_index: index };
+    const isGhost = store.replacement_index !== null && index >= store.replacement_index;
+    const node = { type: 'history', chord_display: formatChordName(chord), notes: [], original_index: index, isGhost };
 
     // 第一步：拼写所有声部的音符信息
     const spells = {};
@@ -354,15 +358,17 @@ const renderData = computed(() => ({
  * 播放头 X 坐标
  * 根据当前播放位置或历史长度计算：
  * - 播放中：跟随 playbackIndex
- * - 未播放：跟随最后一个和弦或下一个待输入位置
+ * - 未播放：始终指向下一个待输入位置
  */
 const playheadX = computed(() => {
   const startX = START_X + keySignatures.value.length * SIG_SPACING;
   if (store.playbackIndex !== null) return startX + store.playbackIndex * NOTE_SPACING;
+  // 替换模式下，光标在替换位置
+  if (store.replacement_index !== null) return startX + store.replacement_index * NOTE_SPACING;
   const idx = store.history.length;
   if (store.target_melody.length > 0 && idx < store.target_melody.length) return startX + idx * NOTE_SPACING;
   if (store.target_bass.length > 0 && idx < store.target_bass.length) return startX + idx * NOTE_SPACING;
-  return startX + Math.max(0, store.history.length - 1) * NOTE_SPACING;
+  return startX + store.history.length * NOTE_SPACING;
 });
 
 // ============ 监听器 ============
@@ -411,12 +417,17 @@ function getAccDy(sym) {
 }
 
 /**
- * 回退到指定历史节点
- * 删除该节点之后的所有历史，并重新同步状态
- * @param {number} index - 目标节点索引
+ * 进入替换模式：将指定历史节点设为可替换目标
+ * 被替换位置及之后的节点会显示为灰色 ghost
+ * @param {number|null} index - 目标节点索引，null 表示取消替换
  */
-function rewindTo(index) {
-  store.history = store.history.slice(0, index + 1);
+function enterReplaceMode(index) {
+  if (index === null || store.replacement_index === index) {
+    // null 或再次点击同一节点则取消替换
+    store.replacement_index = null;
+  } else {
+    store.replacement_index = index;
+  }
   store.pending_note = null;
   syncState();
 }
@@ -461,8 +472,17 @@ function rewindTo(index) {
   transition: all 0.2s;
 }
 
+/* ghost 节点背景 */
+.clickable-node .ghost-bg {
+  fill: transparent;
+  transition: all 0.2s;
+}
+
 /* 悬浮背景：鼠标悬停时显示淡灰 */
-.clickable-node:hover .hover-bg {
+.clickable-node:hover .hover-bg,
+.clickable-node:hover .ghost-bg {
   fill: rgba(0, 0, 0, 0.04);
 }
+
+
 </style>

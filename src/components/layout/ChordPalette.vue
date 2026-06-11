@@ -70,6 +70,9 @@ const hasDiatonic = computed(() => Object.keys(store.categories.diatonic).length
 const hasTonicization = computed(() => Object.keys(store.categories.tonicization).length > 0);
 
 const emptyTitle = computed(() => {
+  if (store.replacement_index !== null) {
+    return '请选择替换和弦';
+  }
   if (store.mode === 'SOPRANO') {
     return store.target_melody.length > 0 ? '无可用路径' : '等待旋律确认中';
   }

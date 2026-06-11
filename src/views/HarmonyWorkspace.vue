@@ -192,6 +192,8 @@ function handleSelectChord(chord) {
   }
 }
 
+
+
 onMounted(() => {
   document.title = '斯波索宾和声引擎';
   syncState();

@@ -41,7 +41,8 @@ export const store = reactive({
   categories: { diatonic: {}, tonicization: {} },  // 可用和弦候选分类
   playbackIndex: null,                    // 当前播放索引
   debug_message: null,                    // 调试诊断信息
-  is_completed: false                     // 是否已完成高音题推演
+  is_completed: false,                    // 是否已完成高音题推演
+  replacement_index: null                 // 当前正在替换的历史位置索引
 });
 
 /** DAG缓存对象，以 "调性_旋律" 为键存储已构建的DAG */
@@ -276,6 +277,18 @@ export function syncState(action_chord = null) {
   if (action_chord) {
     const target_chord = action_chord;
 
+    // 如果处于替换模式，先截断历史到替换位置
+    if (store.replacement_index !== null) {
+      store.history = store.history.slice(0, store.replacement_index);
+      store.replacement_index = null;
+      // 同时清空 target_melody / target_bass 中对应的部分（如果有）
+      if (store.mode === 'SOPRANO') {
+        store.target_melody = store.target_melody.slice(0, store.history.length);
+      } else if (store.mode === 'BASS') {
+        store.target_bass = store.target_bass.slice(0, store.history.length);
+      }
+    }
+
     if (store.mode === "SOPRANO" && store.target_melody.length > 0) {
       const dagLayers = get_cached_dag(store.key_name, store.target_melody, active_dna_db, key_info);
       if (dagLayers) processDagSelection(dagLayers, target_chord, shift);
@@ -352,7 +365,7 @@ export function syncState(action_chord = null) {
     } else {
       next_chords = extractNextChordsFromDag(dag, store.history, store.target_bass.length);
     }
-  } else if (store.history.length === 0) {
+  } else if (store.history.length === 0 || store.replacement_index === 0) {
     // 首拍候选计算
     if (store.mode === "COMPOSE" && store.pending_note !== null) {
       // 筛选包含当前旋律音的和弦
@@ -366,8 +379,9 @@ export function syncState(action_chord = null) {
       next_chords = Object.keys(active_dna_db);
     }
   } else {
-    // 后续拍候选计算
-    const last_item = store.history[store.history.length - 1];
+    // 后续拍候选计算（替换模式下基于截断后的最后节点）
+    const effectiveLen = store.replacement_index !== null ? store.replacement_index : store.history.length;
+    const last_item = store.history[effectiveLen - 1];
 
     if (store.mode === "COMPOSE") {
       if (store.pending_note !== null) {
@@ -416,7 +430,8 @@ export function syncState(action_chord = null) {
 
   // ===== 死胡同检测 =====
   let is_dead_end = false;
-  if (store.history.length > 0 && !store.is_completed && !store.debug_message) {
+  const effective_len = store.replacement_index !== null ? store.replacement_index : store.history.length;
+  if (effective_len > 0 && !store.is_completed && !store.debug_message) {
     if (store.mode !== "COMPOSE" && next_chords.length === 0) {
       is_dead_end = true;
     } else if (store.mode === "COMPOSE" && store.pending_note !== null && next_chords.length === 0) {
@@ -436,6 +451,19 @@ export function syncState(action_chord = null) {
  * 重置全局状态
  * 清空所有和声历史、旋律输入和状态标记，恢复到初始状态。
  */
+/**
+ * 取消替换模式
+ * 恢复被截断的历史记录，回到正常浏览状态。
+ */
+export function cancelReplacement() {
+  store.replacement_index = null;
+  syncState();
+}
+
+/**
+ * 重置全局状态
+ * 清空所有和声历史、旋律输入和状态标记，恢复到初始状态。
+ */
 export function resetState() {
   store.history = [];
   store.target_melody = [];
@@ -444,5 +472,6 @@ export function resetState() {
   store.playbackIndex = null;
   store.debug_message = null;
   store.is_completed = false;
+  store.replacement_index = null;
   syncState();
 }
