@@ -131,12 +131,12 @@ export function evaluateVoicing(oldVoices, newVoices, lastChord, targetChord, ke
   // 计算女高音旋律赦免状态（特定解决中允许大跳）
   const leapS = Math.abs(newVoices.S - oldVoices.S);
   let isAmnesty = false;
-  if (['D₃₄', 'D₅₆', 'D₇', 'D⁶', 'DD₃₄♭⁵', 'DD₂♭⁵', 'DD₅₆♭⁵', 'DD₇♭⁵', 'D₇不完全'].includes(lastChord) &&
-      ['T', 'T不完全', 'D', 'D₇', 'K₆₄', 't', 't不完全'].includes(targetChord)) {
+  if (['D34', 'D56', 'D7', 'D6', 'DD34b5', 'DD2b5', 'DD56b5', 'DD7b5', 'D7不完全'].includes(lastChord) &&
+      ['T', 'T不完全', 'D', 'D7', 'K64', 't', 't不完全'].includes(targetChord)) {
     if ([5, 7, 0].includes(leapS)) isAmnesty = true;
   }
-  if (['D₇⁶', 'DD₇⁶'].includes(lastChord) &&
-      ['T', 'T不完全', 't', 't不完全', 'D', 'D₇', 'D₇不完全'].includes(targetChord)) {
+  if (['D7⁶', 'DD7⁶'].includes(lastChord) &&
+      ['T', 'T不完全', 't', 't不完全', 'D', 'D7', 'D7不完全'].includes(targetChord)) {
     if ([3, 4].includes(leapS) && newVoices.S < oldVoices.S) isAmnesty = true;
   }
 

@@ -24,7 +24,7 @@
 import { reactive } from 'vue';
 import { MAJOR_DNA, MINOR_DNA } from './data/index.js';
 import { KEY_REGISTRY, transpose_dna } from './tonality/index.js';
-import { v_to_tuple, tuple_to_v, get_chord_siblings, categorize_chords } from './utils/index.js';
+import { vToTuple, tupleToV, getChordSiblings, categorizeChords } from './utils/index.js';
 import { getChordCandidates } from './core/candidateEngine.js';
 import { evaluateVoicing } from './rules/index.js';
 import { buildFullDag } from './core/dagBuilder.js';
@@ -104,13 +104,144 @@ function get_cached_dag(key_name, target_melody, active_dna_db, key_info, target
  *   S=72+shift, A=65+shift, T=60+shift, B=48+shift
  * S声部权重1.5倍，因为旋律声部位置更重要。
  */
-function score_initial(v, shift) {
+function scoreInitial(v, shift) {
   const v_shift = shift <= 3 ? shift : shift - 12;
   const ideal_S = 72 + v_shift;
   const ideal_A = 65 + v_shift;
   const ideal_T = 60 + v_shift;
   const ideal_B = 48 + v_shift;
   return Math.abs(v.S - ideal_S) * 1.5 + Math.abs(v.A - ideal_A) + Math.abs(v.T - ideal_T) + Math.abs(v.B - ideal_B);
+}
+
+/**
+ * DAG模式通用处理：用户选择和弦
+ * @param {Array} dagLayers - DAG层数组
+ * @param {string} targetChord - 用户选择的和弦
+ * @param {number} shift - 调性偏移
+ */
+function processDagSelection(dagLayers, targetChord, shift) {
+  const step = store.history.length;
+  let validStates = [];
+  if (step === 0) {
+    validStates = Object.values(dagLayers[0]).filter(s => s.chord === targetChord);
+  } else {
+    const lastH = store.history[store.history.length - 1];
+    const lastKey = `${lastH.chord}|${JSON.stringify(vToTuple(lastH.voices))}`;
+    const stateData = dagLayers[step - 1][lastKey];
+    if (stateData) {
+      validStates = [...stateData.next].map(k => dagLayers[step][k]).filter(s => s && s.chord === targetChord);
+    }
+  }
+  if (validStates.length > 0) {
+    validStates.sort((a, b) => scoreInitial(tupleToV(a.tuple), shift) - scoreInitial(tupleToV(b.tuple), shift));
+    const best = validStates[0];
+    store.history.push({chord: best.chord, voices: tupleToV(best.tuple)});
+  }
+}
+
+/**
+ * DAG连通性诊断探针
+ * @param {number[]} targetSequence - 目标旋律序列
+ * @param {Object} activeDnaDb - DNA数据库
+ * @param {Object} keyInfo - 调性信息
+ * @param {string} targetVoice - 固定声部 ('S' 或 'B')
+ * @returns {string} 诊断日志
+ */
+function runDagProbe(targetSequence, activeDnaDb, keyInfo, targetVoice) {
+  const logs = [];
+  const label = targetVoice === 'B' ? '低音题' : '';
+  logs.push(`=== 启动 DAG 连通性诊断探针 ${label} ===`);
+  logs.push(`调性: ${keyInfo.type} / 根音偏移: ${keyInfo.shift}`);
+  logs.push(`目标${targetVoice === 'B' ? '低音' : ''}序列 (MIDI): ${targetSequence.join(", ")}`);
+  logs.push("-".repeat(50));
+
+  let currentLayer = {};
+  let startIndex = 0;
+  if (store.history.length === 0) {
+    const startChord = keyInfo.type === "MAJOR" ? "T" : "t";
+    const cands = targetVoice === 'B'
+      ? getChordCandidates(startChord, activeDnaDb, null, targetSequence[0])
+      : getChordCandidates(startChord, activeDnaDb, targetSequence[0]);
+    for (const v of cands) {
+      currentLayer[`${startChord}|${JSON.stringify(vToTuple(v))}`] = new Set([startChord]);
+    }
+    logs.push(`[节点 0] 目标 MIDI=${targetSequence[0]}, 初始 '${startChord}' 合法状态数: ${Object.keys(currentLayer).length}`);
+  } else {
+    const lastH = store.history[store.history.length - 1];
+    startIndex = store.history.length;
+    currentLayer[`${lastH.chord}|${JSON.stringify(vToTuple(lastH.voices))}`] = new Set([lastH.chord]);
+    logs.push(`基于已有状态集，从第 ${startIndex} 个节点继续推演...`);
+  }
+
+  for (let i = (store.history.length > 0 ? startIndex + 1 : 1); i < targetSequence.length; i++) {
+    const nextLayerLocal = {};
+    const tgt = targetSequence[i];
+    const allPossibleNexts = new Set();
+    for (const stateKey of Object.keys(currentLayer)) {
+      const cName = stateKey.split("|")[0];
+      for (const nxt of activeDnaDb[cName]?.next || []) allPossibleNexts.add(nxt);
+    }
+    const candCache = {};
+    for (const nxtChord of allPossibleNexts) {
+      if (nxtChord in activeDnaDb) {
+        candCache[nxtChord] = targetVoice === 'B'
+          ? getChordCandidates(nxtChord, activeDnaDb, null, tgt)
+          : getChordCandidates(nxtChord, activeDnaDb, tgt);
+      }
+    }
+    for (const [stateKey] of Object.entries(currentLayer)) {
+      const cName = stateKey.split("|")[0];
+      const vTup = JSON.parse(stateKey.split("|")[1]);
+      const possibleNexts = activeDnaDb[cName]?.next || [];
+      for (const nxtChord of possibleNexts) {
+        if (!(nxtChord in activeDnaDb)) continue;
+        for (const nxtV of candCache[nxtChord] || []) {
+          if (evaluateVoicing(tupleToV(vTup), nxtV, cName, nxtChord, keyInfo) < 999999) {
+            nextLayerLocal[`${nxtChord}|${JSON.stringify(vToTuple(nxtV))}`] = true;
+          }
+        }
+      }
+    }
+    logs.push(`[节点 ${i}] 目标 MIDI=${tgt}, 存活的合法连接状态数: ${Object.keys(nextLayerLocal).length}`);
+    if (Object.keys(nextLayerLocal).length === 0) {
+      logs.push("-".repeat(50));
+      logs.push("❌ 连通性异常：路径已断开");
+      logs.push(`中断点: 节点 ${i} (目标 MIDI: ${tgt})`);
+      logs.push(`在上一个节点 (MIDI: ${targetSequence[i-1]}) 时，可用的合法配置包含：`);
+      const survivingChords = {};
+      for (const stateKey of Object.keys(currentLayer)) {
+        const cName = stateKey.split("|")[0];
+        survivingChords[cName] = (survivingChords[cName] || 0) + 1;
+      }
+      for (const [c, count] of Object.entries(survivingChords)) {
+        logs.push(` - ${c}: ${count} 个有效声部排列`);
+      }
+      break;
+    }
+    currentLayer = nextLayerLocal;
+  }
+  return logs.join("\n");
+}
+
+/**
+ * 从DAG中提取下一拍可用和弦
+ * @param {Array} dag - DAG层数组
+ * @param {Array} history - 历史记录
+ * @param {number} targetLength - 目标序列长度
+ * @returns {string[]} 下一拍可用和弦列表
+ */
+function extractNextChordsFromDag(dag, history, targetLength) {
+  if (history.length === 0) {
+    return [...new Set(Object.values(dag[0]).map(s => s.chord))];
+  } else if (history.length < targetLength) {
+    const lastItem = history[history.length - 1];
+    const lastKey = `${lastItem.chord}|${JSON.stringify(vToTuple(lastItem.voices))}`;
+    const stateData = dag[history.length - 1][lastKey];
+    if (stateData) {
+      return [...new Set([...stateData.next].map(k => dag[history.length][k]).filter(Boolean).map(s => s.chord))];
+    }
+  }
+  return [];
 }
 
 /**
@@ -123,7 +254,7 @@ function score_initial(v, shift) {
  *    - 首拍: 选择最优初始声部排列
  *    - 后续: 使用Viterbi算法全局重优化整个序列
  *
- * 2. SOPRANO模式（高音题）:
+ * 2. SOPRANO/BASS模式（高音题/低音题）:
  *    - 首拍: 从DAG初始层中选取匹配目标旋律的配置
  *    - 后续: 沿DAG路径前进，选择最优配置
  *    - 自动构建DAG并缓存
@@ -133,7 +264,7 @@ function score_initial(v, shift) {
  *    - 系统筛选出包含该旋律音的合法和弦候选
  *    - 用户选择和弦后固化该步
  */
-export function sync_state(action_chord = null) {
+export function syncState(action_chord = null) {
   const key_info = get_key_info();
   const active_dna_db = get_active_dna();
   const shift = key_info.shift;
@@ -146,52 +277,11 @@ export function sync_state(action_chord = null) {
     const target_chord = action_chord;
 
     if (store.mode === "SOPRANO" && store.target_melody.length > 0) {
-      // --- SOPRANO模式: 沿DAG路径前进 ---
-      const dag_layers = get_cached_dag(store.key_name, store.target_melody, active_dna_db, key_info);
-      if (dag_layers) {
-        const step = store.history.length;
-        let valid_states = [];
-        if (step === 0) {
-          // 首拍: 从DAG第0层中筛选匹配所选和弦的状态
-          valid_states = Object.values(dag_layers[0]).filter(s => s.chord === target_chord);
-        } else {
-          // 后续: 从前一状态的next集合中筛选
-          const last_h = store.history[store.history.length - 1];
-          const last_key = `${last_h.chord}|${JSON.stringify(v_to_tuple(last_h.voices))}`;
-          const state_data = dag_layers[step - 1][last_key];
-          if (state_data) {
-            valid_states = [...state_data.next].map(k => dag_layers[step][k]).filter(s => s && s.chord === target_chord);
-          }
-        }
-        if (valid_states.length > 0) {
-          // 按初始位置评分排序，选择最舒适的声部排列
-          valid_states.sort((a, b) => score_initial(tuple_to_v(a.tuple), shift) - score_initial(tuple_to_v(b.tuple), shift));
-          const best = valid_states[0];
-          store.history.push({chord: best.chord, voices: tuple_to_v(best.tuple)});
-        }
-      }
+      const dagLayers = get_cached_dag(store.key_name, store.target_melody, active_dna_db, key_info);
+      if (dagLayers) processDagSelection(dagLayers, target_chord, shift);
     } else if (store.mode === "BASS" && store.target_bass.length > 0) {
-      // --- BASS模式: 沿DAG路径前进 (固定低音) ---
-      const dag_layers = get_cached_dag(store.key_name, store.target_bass, active_dna_db, key_info, 'B');
-      if (dag_layers) {
-        const step = store.history.length;
-        let valid_states = [];
-        if (step === 0) {
-          valid_states = Object.values(dag_layers[0]).filter(s => s.chord === target_chord);
-        } else {
-          const last_h = store.history[store.history.length - 1];
-          const last_key = `${last_h.chord}|${JSON.stringify(v_to_tuple(last_h.voices))}`;
-          const state_data = dag_layers[step - 1][last_key];
-          if (state_data) {
-            valid_states = [...state_data.next].map(k => dag_layers[step][k]).filter(s => s && s.chord === target_chord);
-          }
-        }
-        if (valid_states.length > 0) {
-          valid_states.sort((a, b) => score_initial(tuple_to_v(a.tuple), shift) - score_initial(tuple_to_v(b.tuple), shift));
-          const best = valid_states[0];
-          store.history.push({chord: best.chord, voices: tuple_to_v(best.tuple)});
-        }
-      }
+      const dagLayers = get_cached_dag(store.key_name, store.target_bass, active_dna_db, key_info, 'B');
+      if (dagLayers) processDagSelection(dagLayers, target_chord, shift);
     } else if (store.mode === "COMPOSE" && store.pending_note !== null) {
       // --- COMPOSE模式: 固定旋律音，筛选合法和弦 ---
       const tgt_s = store.pending_note;
@@ -199,7 +289,7 @@ export function sync_state(action_chord = null) {
       if (store.history.length === 0) {
         // 首拍: 无需检查声部进行，直接筛选包含该旋律音的和弦
         for (const v of getChordCandidates(target_chord, active_dna_db, tgt_s)) {
-          valid_states.push([target_chord, v_to_tuple(v)]);
+          valid_states.push([target_chord, vToTuple(v)]);
         }
       } else {
         // 后续: 需要检查与前和弦的声部进行是否合法
@@ -207,14 +297,14 @@ export function sync_state(action_chord = null) {
         const last_v = store.history[store.history.length - 1].voices;
         for (const nxt_v of getChordCandidates(target_chord, active_dna_db, tgt_s)) {
           if (evaluateVoicing(last_v, nxt_v, last_c, target_chord, key_info) < 999999) {
-            valid_states.push([target_chord, v_to_tuple(nxt_v)]);
+            valid_states.push([target_chord, vToTuple(nxt_v)]);
           }
         }
       }
       if (valid_states.length > 0) {
-        valid_states.sort((a, b) => score_initial(tuple_to_v(a[1]), shift) - score_initial(tuple_to_v(b[1]), shift));
+        valid_states.sort((a, b) => scoreInitial(tupleToV(a[1]), shift) - scoreInitial(tupleToV(b[1]), shift));
         const best = valid_states[0];
-        store.history.push({chord: best[0], voices: tuple_to_v(best[1])});
+        store.history.push({chord: best[0], voices: tupleToV(best[1])});
         store.target_melody.push(store.pending_note);
         store.pending_note = null;
       }
@@ -224,7 +314,7 @@ export function sync_state(action_chord = null) {
         // 首拍: 选择最舒适的初始声部排列
         const cands = getChordCandidates(target_chord, active_dna_db, null);
         if (cands.length > 0) {
-          cands.sort((a, b) => score_initial(a, shift) - score_initial(b, shift));
+          cands.sort((a, b) => scoreInitial(a, shift) - scoreInitial(b, shift));
           store.history.push({chord: target_chord, voices: cands[0]});
         }
       } else {
@@ -243,184 +333,24 @@ export function sync_state(action_chord = null) {
   let next_chords = [];
 
   if (store.mode === "SOPRANO" && store.target_melody.length > 0) {
-    // 检查是否已完成整个旋律的配和声
     if (store.history.length === store.target_melody.length) {
       store.is_completed = true;
     }
-
     const dag = get_cached_dag(store.key_name, store.target_melody, active_dna_db, key_info);
     if (!dag || dag.length < store.target_melody.length) {
-      // DAG构建失败: 启动连通性诊断
-      const logs = [];
-      logs.push("=== 启动 DAG 连通性诊断探针 ===");
-      logs.push(`调性: ${key_info.type} / 根音偏移: ${key_info.shift}`);
-      logs.push(`目标序列 (MIDI): ${store.target_melody.join(", ")}`);
-      logs.push("-".repeat(50));
-
-      let current_layer = {};
-      let start_index = 0;
-      if (store.history.length === 0) {
-        // 从主/小主和弦开始诊断
-        const start_chord = key_info.type === "MAJOR" ? "T" : "t";
-        const cands = getChordCandidates(start_chord, active_dna_db, store.target_melody[0]);
-        for (const v of cands) {
-          current_layer[`${start_chord}|${JSON.stringify(v_to_tuple(v))}`] = new Set([start_chord]);
-        }
-        logs.push(`[节点 0] 目标 MIDI=${store.target_melody[0]}, 初始 '${start_chord}' 合法状态数: ${Object.keys(current_layer).length}`);
-      } else {
-        const last_h = store.history[store.history.length - 1];
-        start_index = store.history.length;
-        current_layer[`${last_h.chord}|${JSON.stringify(v_to_tuple(last_h.voices))}`] = new Set([last_h.chord]);
-        logs.push(`基于已有状态集，从第 ${start_index} 个节点继续推演...`);
-      }
-
-      // 逐层推演，直到发现断链点
-      for (let i = (store.history.length > 0 ? start_index + 1 : 1); i < store.target_melody.length; i++) {
-        const next_layer_local = {};
-        const tgt_s = store.target_melody[i];
-        const all_possible_nexts = new Set();
-        for (const state_key of Object.keys(current_layer)) {
-          const c_name = state_key.split("|")[0];
-          for (const nxt of active_dna_db[c_name]?.next || []) all_possible_nexts.add(nxt);
-        }
-        const cand_cache = {};
-        for (const nxt_chord of all_possible_nexts) {
-          if (nxt_chord in active_dna_db) cand_cache[nxt_chord] = getChordCandidates(nxt_chord, active_dna_db, tgt_s);
-        }
-        for (const [state_key] of Object.entries(current_layer)) {
-          const c_name = state_key.split("|")[0];
-          const v_tup = JSON.parse(state_key.split("|")[1]);
-          const possible_nexts = active_dna_db[c_name]?.next || [];
-          for (const nxt_chord of possible_nexts) {
-            if (!(nxt_chord in active_dna_db)) continue;
-            for (const nxt_v of cand_cache[nxt_chord] || []) {
-              if (evaluateVoicing(tuple_to_v(v_tup), nxt_v, c_name, nxt_chord, key_info) < 999999) {
-                next_layer_local[`${nxt_chord}|${JSON.stringify(v_to_tuple(nxt_v))}`] = true;
-              }
-            }
-          }
-        }
-        logs.push(`[节点 ${i}] 目标 MIDI=${tgt_s}, 存活的合法连接状态数: ${Object.keys(next_layer_local).length}`);
-        if (Object.keys(next_layer_local).length === 0) {
-          // 发现断链点，输出诊断信息
-          logs.push("-".repeat(50));
-          logs.push("❌ 连通性异常：路径已断开");
-          logs.push(`中断点: 节点 ${i} (目标 MIDI: ${tgt_s})`);
-          logs.push(`在上一个节点 (MIDI: ${store.target_melody[i-1]}) 时，可用的合法配置包含：`);
-          const surviving_chords = {};
-          for (const state_key of Object.keys(current_layer)) {
-            const c_name = state_key.split("|")[0];
-            surviving_chords[c_name] = (surviving_chords[c_name] || 0) + 1;
-          }
-          for (const [c, count] of Object.entries(surviving_chords)) {
-            logs.push(` - ${c}: ${count} 个有效声部排列`);
-          }
-          break;
-        }
-        current_layer = next_layer_local;
-      }
-      store.debug_message = logs.join("\n");
+      store.debug_message = runDagProbe(store.target_melody, active_dna_db, key_info, 'S');
     } else {
-      // DAG构建成功: 从当前状态提取可用下一和弦
-      if (store.history.length === 0) {
-        // 首拍: DAG第0层的所有和弦类型
-        next_chords = [...new Set(Object.values(dag[0]).map(s => s.chord))];
-      } else if (store.history.length < store.target_melody.length) {
-        // 后续: 从当前状态的next集合中提取和弦名
-        const last_item = store.history[store.history.length - 1];
-        const last_key = `${last_item.chord}|${JSON.stringify(v_to_tuple(last_item.voices))}`;
-        const state_data = dag[store.history.length - 1][last_key];
-        if (state_data) {
-          next_chords = [...new Set([...state_data.next].map(k => dag[store.history.length][k]).filter(Boolean).map(s => s.chord))];
-        }
-      }
+      next_chords = extractNextChordsFromDag(dag, store.history, store.target_melody.length);
     }
   } else if (store.mode === "BASS" && store.target_bass.length > 0) {
-    // 检查是否已完成整个低音旋律的配和声
     if (store.history.length === store.target_bass.length) {
       store.is_completed = true;
     }
-
     const dag = get_cached_dag(store.key_name, store.target_bass, active_dna_db, key_info, 'B');
     if (!dag || dag.length < store.target_bass.length) {
-      // DAG构建失败: 启动连通性诊断（BASS模式）
-      const logs = [];
-      logs.push("=== 启动 DAG 连通性诊断探针 (低音题) ===");
-      logs.push(`调性: ${key_info.type} / 根音偏移: ${key_info.shift}`);
-      logs.push(`目标低音序列 (MIDI): ${store.target_bass.join(", ")}`);
-      logs.push("-".repeat(50));
-
-      let current_layer = {};
-      let start_index = 0;
-      if (store.history.length === 0) {
-        const start_chord = key_info.type === "MAJOR" ? "T" : "t";
-        const cands = getChordCandidates(start_chord, active_dna_db, null, store.target_bass[0]);
-        for (const v of cands) {
-          current_layer[`${start_chord}|${JSON.stringify(v_to_tuple(v))}`] = new Set([start_chord]);
-        }
-        logs.push(`[节点 0] 目标低音 MIDI=${store.target_bass[0]}, 初始 '${start_chord}' 合法状态数: ${Object.keys(current_layer).length}`);
-      } else {
-        const last_h = store.history[store.history.length - 1];
-        start_index = store.history.length;
-        current_layer[`${last_h.chord}|${JSON.stringify(v_to_tuple(last_h.voices))}`] = new Set([last_h.chord]);
-        logs.push(`基于已有状态集，从第 ${start_index} 个节点继续推演...`);
-      }
-
-      for (let i = (store.history.length > 0 ? start_index + 1 : 1); i < store.target_bass.length; i++) {
-        const next_layer_local = {};
-        const tgt_b = store.target_bass[i];
-        const all_possible_nexts = new Set();
-        for (const state_key of Object.keys(current_layer)) {
-          const c_name = state_key.split("|")[0];
-          for (const nxt of active_dna_db[c_name]?.next || []) all_possible_nexts.add(nxt);
-        }
-        const cand_cache = {};
-        for (const nxt_chord of all_possible_nexts) {
-          if (nxt_chord in active_dna_db) cand_cache[nxt_chord] = getChordCandidates(nxt_chord, active_dna_db, null, tgt_b);
-        }
-        for (const [state_key] of Object.entries(current_layer)) {
-          const c_name = state_key.split("|")[0];
-          const v_tup = JSON.parse(state_key.split("|")[1]);
-          const possible_nexts = active_dna_db[c_name]?.next || [];
-          for (const nxt_chord of possible_nexts) {
-            if (!(nxt_chord in active_dna_db)) continue;
-            for (const nxt_v of cand_cache[nxt_chord] || []) {
-              if (evaluateVoicing(tuple_to_v(v_tup), nxt_v, c_name, nxt_chord, key_info) < 999999) {
-                next_layer_local[`${nxt_chord}|${JSON.stringify(v_to_tuple(nxt_v))}`] = true;
-              }
-            }
-          }
-        }
-        logs.push(`[节点 ${i}] 目标低音 MIDI=${tgt_b}, 存活的合法连接状态数: ${Object.keys(next_layer_local).length}`);
-        if (Object.keys(next_layer_local).length === 0) {
-          logs.push("-".repeat(50));
-          logs.push("❌ 连通性异常：路径已断开");
-          logs.push(`中断点: 节点 ${i} (目标低音 MIDI: ${tgt_b})`);
-          logs.push(`在上一个节点 (MIDI: ${store.target_bass[i-1]}) 时，可用的合法配置包含：`);
-          const surviving_chords = {};
-          for (const state_key of Object.keys(current_layer)) {
-            const c_name = state_key.split("|")[0];
-            surviving_chords[c_name] = (surviving_chords[c_name] || 0) + 1;
-          }
-          for (const [c, count] of Object.entries(surviving_chords)) {
-            logs.push(` - ${c}: ${count} 个有效声部排列`);
-          }
-          break;
-        }
-        current_layer = next_layer_local;
-      }
-      store.debug_message = logs.join("\n");
+      store.debug_message = runDagProbe(store.target_bass, active_dna_db, key_info, 'B');
     } else {
-      if (store.history.length === 0) {
-        next_chords = [...new Set(Object.values(dag[0]).map(s => s.chord))];
-      } else if (store.history.length < store.target_bass.length) {
-        const last_item = store.history[store.history.length - 1];
-        const last_key = `${last_item.chord}|${JSON.stringify(v_to_tuple(last_item.voices))}`;
-        const state_data = dag[store.history.length - 1][last_key];
-        if (state_data) {
-          next_chords = [...new Set([...state_data.next].map(k => dag[store.history.length][k]).filter(Boolean).map(s => s.chord))];
-        }
-      }
+      next_chords = extractNextChordsFromDag(dag, store.history, store.target_bass.length);
     }
   } else if (store.history.length === 0) {
     // 首拍候选计算
@@ -447,9 +377,9 @@ export function sync_state(action_chord = null) {
         const possible_nexts = new Set();
         for (const nxt of active_dna_db[last_c]?.next || []) {
           possible_nexts.add(nxt);
-          for (const sib of get_chord_siblings(nxt, active_dna_db)) possible_nexts.add(sib);
+          for (const sib of getChordSiblings(nxt, active_dna_db)) possible_nexts.add(sib);
         }
-        for (const sib of get_chord_siblings(last_c, active_dna_db)) possible_nexts.add(sib);
+        for (const sib of getChordSiblings(last_c, active_dna_db)) possible_nexts.add(sib);
 
         for (const nxt_c of possible_nexts) {
           if (!(nxt_c in active_dna_db)) continue;
@@ -468,9 +398,9 @@ export function sync_state(action_chord = null) {
       const possible_nexts = new Set();
       for (const nxt of active_dna_db[last_c]?.next || []) {
         possible_nexts.add(nxt);
-        for (const sib of get_chord_siblings(nxt, active_dna_db)) possible_nexts.add(sib);
+        for (const sib of getChordSiblings(nxt, active_dna_db)) possible_nexts.add(sib);
       }
-      for (const sib of get_chord_siblings(last_c, active_dna_db)) possible_nexts.add(sib);
+      for (const sib of getChordSiblings(last_c, active_dna_db)) possible_nexts.add(sib);
 
       for (const nxt_c of possible_nexts) {
         if (!(nxt_c in active_dna_db)) continue;
@@ -499,14 +429,14 @@ export function sync_state(action_chord = null) {
   }
 
   // 更新UI可用的和弦候选分类
-  store.categories = categorize_chords(next_chords);
+  store.categories = categorizeChords(next_chords);
 }
 
 /**
  * 重置全局状态
  * 清空所有和声历史、旋律输入和状态标记，恢复到初始状态。
  */
-export function reset_state() {
+export function resetState() {
   store.history = [];
   store.target_melody = [];
   store.target_bass = [];
@@ -514,5 +444,5 @@ export function reset_state() {
   store.playbackIndex = null;
   store.debug_message = null;
   store.is_completed = false;
-  sync_state();
+  syncState();
 }

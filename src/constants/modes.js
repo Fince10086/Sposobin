@@ -21,23 +21,10 @@ export const MODES = {
  * 工作模式的中文显示标签
  * 用于UI界面中的模式选择器和提示信息
  */
-export const MODE_LABELS = {
-  [MODES.FREE]: '自由模式',
-  [MODES.SOPRANO]: '高音题模式',
-  [MODES.COMPOSE]: '旋律写作模式'
-};
-
-/**
- * 合法终止和弦集合
- * 高音题模式推演结束时，必须以主和弦（或其变形）收尾
- * 包括大调主和弦(T)、小调主和弦(t)及其不完全/双三变形
- */
-export const VALID_FINAL_CHORDS = new Set(['T', 'T不完全', 'T双三', 't', 't不完全']);
-
 /**
  * 起始候选和弦列表
- * 高音题模式的初始和弦从这些功能组中选择：
- * 主功能(T/T₆)、属功能(D/D₆/D₇)、下属功能(S/S₆)、
- * 小调主功能(t/t₆)、小调下属功能(s/s₆)
+ * 高音题/低音题模式的初始和弦从这些功能组中选择：
+ * 主功能(T/T6)、属功能(D/D6/D7)、下属功能(S/S6)、
+ * 小调主功能(t/t6)、小调下属功能(s/s6)
  */
-export const START_CANDIDATES = ['T', 'T₆', 'D', 'D₆', 'S', 'S₆', 'D₇', 't', 't₆', 's', 's₆'];
+export const START_CANDIDATES = ['T', 'T6', 'D', 'D6', 'S', 'S6', 'D7', 't', 't6', 's', 's6'];

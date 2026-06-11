@@ -4,7 +4,7 @@
  * 本模块处理各声部横向运动的约束:
  *   1. 低音跳进限制: 最大不超过纯八度，禁止小七度/大七度跳进
  *   2. 各声部音程性质检查: 确保跳进符合自然音阶逻辑
- *   3. 罕见七和弦检查: 对T₇、VI₇等不常用七和弦施加限制
+ *   3. 罕见七和弦检查: 对T7、VI7等不常用七和弦施加限制
  *   4. 旋律线惩罚计算: 根据跳进幅度计算声部平滑度评分
  */
 
@@ -53,7 +53,7 @@ export function checkBassLeap(oldVoices, newVoices) {
  *   不匹配则视为非古典音程（如增二度、减七度等），通常禁止。
  *
  * 例外:
- *   - N₆→D时允许减二度（那不勒斯和弦的特殊性）
+ *   - N6→D时允许减二度（那不勒斯和弦的特殊性）
  *   - 低音减五度下行允许
  *   - 女高音在特定解决中允许较大跳进
  */
@@ -76,8 +76,8 @@ export function checkIntervalValidity(oldVoices, newVoices, lastChord, targetCho
     else if (normStep === 3 && normIc !== 5) isUnclassical = true;              // 四度必须是5半音
     else if (normStep === 0 && ![0, 1].includes(normIc)) isUnclassical = true;  // 同度/半音必须是0-1半音
 
-    // 例外1: N₆→D允许减二度（那不勒斯和弦降二级到导音）
-    if (lastChord === 'N₆' && targetChord.startsWith('D')) {
+    // 例外1: N6→D允许减二度（那不勒斯和弦降二级到导音）
+    if (lastChord === 'N6' && targetChord.startsWith('D')) {
       if (normStep === 2 && normIc === 2) isUnclassical = false;
     }
 
@@ -111,13 +111,13 @@ export function checkIntervalValidity(oldVoices, newVoices, lastChord, targetCho
  * @param {Object} newVoices - 目标和弦声部配置
  * @returns {number} 罚分值，若非法则返回INVALID_COST
  *
- * 罕见七和弦（T₇、t₇、VI₇等）在古典和声中极少使用，
+ * 罕见七和弦（T7、t7、VI7等）在古典和声中极少使用，
  * 使用时要求:
  *   - 所有声部进行必须极为平稳（不超过全音级进）
  *   - 前接和弦必须有某声部下行级进（作为七音的预备）
  */
 export function checkRareSevenths(lastChord, targetChord, oldVoices, newVoices) {
-  const rareSevenths = ['T₇', 't₇', 'VI₇', 'DTᵢᵢᵢ₇', 'S₇', 's₇'];
+  const rareSevenths = ['T7', 't7', 'VI7', 'DTiii7', 'S7', 's7'];
   let penalty = 0;
 
   // 目标为罕见七和弦: 施加惩罚并限制跳进

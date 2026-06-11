@@ -93,7 +93,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { store, sync_state, reset_state } from '../engine/store.js';
+import { store, syncState, resetState } from '../engine/store.js';
 import { KEY_REGISTRY } from '../engine/tonality/index.js';
 import { useAudio } from '../composables/useAudio.js';
 import { usePlayback } from '../composables/usePlayback.js';
@@ -101,7 +101,7 @@ import { usePlayback } from '../composables/usePlayback.js';
 import AppHeader from '../components/layout/AppHeader.vue';
 import PianoSection from '../components/input/PianoSection.vue';
 import ChordPalette from '../components/layout/ChordPalette.vue';
-import ScoreRenderer from '../ScoreRenderer.vue';
+import ScoreRenderer from '../components/display/ScoreRenderer.vue';
 import AboutModal from '../components/modal/AboutModal.vue';
 import DebugTerminal from '../components/display/DebugTerminal.vue';
 
@@ -131,12 +131,12 @@ function closeAboutModal() {
 }
 
 function handleModeChange() {
-  reset_state();
+  resetState();
 }
 
 function handleReset() {
   resetPlayback();
-  reset_state();
+  resetState();
 }
 
 async function handlePlaySequence() {
@@ -147,7 +147,7 @@ async function handlePlaySequence() {
 function handlePianoClick(midi) {
   if (store.mode === 'COMPOSE') {
     store.pending_note = midi;
-    sync_state();
+    syncState();
   } else if (store.mode === 'SOPRANO') {
     // 添加音符到目标旋律
     store.target_melody.push(midi);
@@ -167,7 +167,7 @@ function handleUndoNote() {
 
 function handleStartSoprano() {
   // 构建DAG并获取候选和弦
-  sync_state();
+  syncState();
 }
 
 function handleUndoBass() {
@@ -178,11 +178,11 @@ function handleUndoBass() {
 
 function handleStartBass() {
   // 构建DAG并获取候选和弦（低音题）
-  sync_state();
+  syncState();
 }
 
 function handleSelectChord(chord) {
-  sync_state(chord);
+  syncState(chord);
   if (store.history.length > 0) {
     playSingleChord(store.history[store.history.length - 1].voices);
   }
@@ -190,7 +190,7 @@ function handleSelectChord(chord) {
 
 onMounted(() => {
   document.title = '斯波索宾和声引擎';
-  sync_state();
+  syncState();
 });
 </script>
 

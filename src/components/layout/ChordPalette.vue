@@ -55,10 +55,10 @@
 <script setup>
 import { computed } from 'vue';
 import { store } from '../../engine/store.js';
-import { format_chord_name } from '../../engine/utils/formatter.js';
+import { formatChordName } from '../../engine/utils/formatter.js';
 
 function fmt(c) {
-  return format_chord_name(c);
+  return formatChordName(c);
 }
 
 const isEmpty = computed(() =>

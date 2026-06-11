@@ -22,14 +22,14 @@ import { INVALID_COST } from '../../constants/limits.js';
  * @returns {number} 0表示合法，INVALID_COST表示非法
  *
  * 当前处理:
- *   - D₉/D₉♭: 九音必须在S声部，且与低音相距超过纯八度
+ *   - D9/D9b: 九音必须在S声部，且与低音相距超过纯八度
  */
 export function checkChordConstraints(newVoices, targetChord, keyInfo) {
-  // D₉ / D₉♭: 九音必须在女高音声部
-  if (['D₉', 'D₉♭'].includes(targetChord)) {
+  // D9 / D9b: 九音必须在女高音声部
+  if (['D9', 'D9b'].includes(targetChord)) {
     const rootPc = keyInfo.root_pc;
     // 大调九音=大九度(root+2)，小调降九音=小九度(root+1)
-    const ninthPc = targetChord === 'D₉' ? (rootPc + 2) % 12 : (rootPc + 1) % 12;
+    const ninthPc = targetChord === 'D9' ? (rootPc + 2) % 12 : (rootPc + 1) % 12;
     if (newVoices.S % 12 !== ninthPc) return INVALID_COST;
     if (newVoices.S - newVoices.B < 14) return INVALID_COST;  // 至少大九度间距
   }
@@ -48,7 +48,7 @@ export function checkChordConstraints(newVoices, targetChord, keyInfo) {
  * 连续的属九和弦之间，九音必须保持不动（作为共同音）。
  */
 export function checkNinthResolution(oldVoices, newVoices, lastChord, targetChord) {
-  if (['D₉', 'D₉♭'].includes(lastChord) && ['D₉', 'D₉♭'].includes(targetChord)) {
+  if (['D9', 'D9b'].includes(lastChord) && ['D9', 'D9b'].includes(targetChord)) {
     if (Math.abs(newVoices.S - oldVoices.S) !== 0) return INVALID_COST;
   }
   return 0;
@@ -58,7 +58,7 @@ export function checkNinthResolution(oldVoices, newVoices, lastChord, targetChor
  * 检查增六和弦的扩张解决
  * @param {Object} oldVoices - 前一和弦声部配置
  * @param {Object} newVoices - 目标和弦声部配置
- * @param {string} lastChord - 前一和弦名（应为It⁺⁶/Ger⁺⁶/Fr⁺⁶）
+ * @param {string} lastChord - 前一和弦名（应为It+6/Ger+6/Fr+6）
  * @param {Object} newSpells - 前后和弦的拼写信息 {last: {}, current: {}}
  * @param {Object} keyInfo - 当前调性信息
  * @returns {number} 0表示合法，INVALID_COST表示非法
@@ -69,7 +69,7 @@ export function checkNinthResolution(oldVoices, newVoices, lastChord, targetChor
  * 两者形成"向心"运动，同时进入属音，产生强烈的解决倾向。
  */
 export function checkAugmentedSixthResolution(oldVoices, newVoices, lastChord, newSpells, keyInfo) {
-  if (!lastChord.startsWith('It⁺⁶') && !lastChord.startsWith('Ger⁺⁶') && !lastChord.startsWith('Fr⁺⁶')) {
+  if (!lastChord.startsWith('It+6') && !lastChord.startsWith('Ger+6') && !lastChord.startsWith('Fr+6')) {
     return 0;
   }
 
@@ -95,10 +95,10 @@ export function checkAugmentedSixthResolution(oldVoices, newVoices, lastChord, n
 }
 
 /**
- * 检查那不勒斯六和弦(N₆)的解决
+ * 检查那不勒斯六和弦(N6)的解决
  * @param {Object} oldVoices - 前一和弦声部配置
  * @param {Object} newVoices - 目标和弦声部配置
- * @param {string} lastChord - 前一和弦名（应为N₆）
+ * @param {string} lastChord - 前一和弦名（应为N6）
  * @param {string} targetChord - 目标和弦名（应为属功能组）
  * @param {Object} newSpells - 拼写信息
  * @param {Object} keyInfo - 当前调性信息
@@ -109,7 +109,7 @@ export function checkAugmentedSixthResolution(oldVoices, newVoices, lastChord, n
  *   - 不允许上行解决（避免增音程）
  */
 export function checkN6Resolution(oldVoices, newVoices, lastChord, targetChord, newSpells, keyInfo) {
-  if (lastChord !== 'N₆' || !['D', 'D₇', 'D₇不完全', 'D₆', 'K₆₄'].includes(targetChord)) {
+  if (lastChord !== 'N6' || !['D', 'D7', 'D7不完全', 'D6', 'K64'].includes(targetChord)) {
     return 0;
   }
 
@@ -144,8 +144,8 @@ export function checkN6Resolution(oldVoices, newVoices, lastChord, targetChord, 
  * 这是古典和声中最严格的解决规则之一。
  */
 export function checkSeventhResolution(oldVoices, newVoices, lastChord, targetChord, newSpells, keyInfo) {
-  const seventhChords = ['D₇', 'D₅₆', 'D₃₄', 'D₂', 'Dᵥᵢᵢ₇', 'Dᵥᵢᵢ₅₆', 'Dᵥᵢᵢ₃₄', 'Dᵥᵢᵢ₂', 'D₇不完全', 'D₇⁶'];
-  const targetTonics = ['T', 'T不完全', 'T₆', 't', 't不完全', 't₆', 'VI', 'VI₆', 'VI_阻碍'];
+  const seventhChords = ['D7', 'D56', 'D34', 'D2', 'Dvii7', 'Dvii56', 'Dvii34', 'Dvii2', 'D7不完全', 'D76'];
+  const targetTonics = ['T', 'T不完全', 'T6', 't', 't不完全', 't6', 'VI', 'VI6', 'VI_阻碍'];
 
   if (!seventhChords.includes(lastChord) || !targetTonics.includes(targetChord)) return 0;
 
@@ -173,11 +173,11 @@ export function checkSeventhResolution(oldVoices, newVoices, lastChord, targetCh
  *
  * 导音（调式VII级音）在属和弦中具有强烈的上行倾向，
  * 必须上行级进解决到主音（I级）。
- * 例外: 当D₆→VI时，S声部的导音可以下行到VI级音。
+ * 例外: 当D6→VI时，S声部的导音可以下行到VI级音。
  */
 export function checkLeadingToneResolution(oldVoices, newVoices, lastChord, targetChord, newSpells, keyInfo) {
-  const dominantChords = ['D', 'D₆', 'D₇', 'D₅₆', 'D₃₄', 'D₂', 'Dᵥᵢᵢ₆', 'Dᵥᵢᵢ₇', 'D₇不完全', 'D₇⁶'];
-  const targetTonics = ['T', 'T不完全', 'T₆', 't', 't不完全', 't₆', 'VI', 'VI₆', 'VI_阻碍'];
+  const dominantChords = ['D', 'D6', 'D7', 'D56', 'D34', 'D2', 'Dvii6', 'Dvii7', 'D7不完全', 'D76'];
+  const targetTonics = ['T', 'T不完全', 'T6', 't', 't不完全', 't6', 'VI', 'VI6', 'VI_阻碍'];
 
   if (!dominantChords.includes(lastChord) || !targetTonics.includes(targetChord)) return 0;
 
@@ -186,8 +186,8 @@ export function checkLeadingToneResolution(oldVoices, newVoices, lastChord, targ
     const oldStep = newSpells.last[v][1];
     if (oldStep === (keyInfo.root_step + 6) % 7) {  // 导音 = VII级
       const newStep = newSpells.current[v][1];
-      // 例外: D₆→VI时，S声部导音可下行到V级（VI和弦的三音）
-      if (lastChord === 'D₆' && targetChord === 'VI' && v === 'S' && newStep === (keyInfo.root_step + 5) % 7) {
+      // 例外: D6→VI时，S声部导音可下行到V级（VI和弦的三音）
+      if (lastChord === 'D6' && targetChord === 'VI' && v === 'S' && newStep === (keyInfo.root_step + 5) % 7) {
         continue;
       }
       // 正常情况下必须上行到主音
@@ -198,21 +198,21 @@ export function checkLeadingToneResolution(oldVoices, newVoices, lastChord, targ
 }
 
 /**
- * 检查终止四六和弦(K₆₄)的解决
+ * 检查终止四六和弦(K64)的解决
  * @param {Object} oldVoices - 前一和弦声部配置
  * @param {Object} newVoices - 目标和弦声部配置
- * @param {string} lastChord - 前一和弦名（应为K₆₄）
+ * @param {string} lastChord - 前一和弦名（应为K64）
  * @param {string} targetChord - 目标和弦名（应为属功能组）
  * @param {Object} newSpells - 拼写信息
  * @param {Object} keyInfo - 当前调性信息
  * @returns {number} 0表示合法，INVALID_COST表示非法
  *
- * K₆₄作为属功能的装饰性和弦，其上方三声部:
+ * K64作为属功能的装饰性和弦，其上方三声部:
  *   - 主音(I级)必须下行级进到导音(VII级)
  *   - 三音(III级)可以下行到II级或上行到IV级
  */
 export function checkCadential64Resolution(oldVoices, newVoices, lastChord, targetChord, newSpells, keyInfo) {
-  if (lastChord !== 'K₆₄' || !['D', 'D₆', 'D₇', 'D₅₆', 'D₃₄', 'D₂', 'D₉', 'D₉♭'].includes(targetChord)) {
+  if (lastChord !== 'K64' || !['D', 'D6', 'D7', 'D56', 'D34', 'D2', 'D9', 'D9b'].includes(targetChord)) {
     return 0;
   }
 
@@ -233,11 +233,11 @@ export function checkCadential64Resolution(oldVoices, newVoices, lastChord, targ
 }
 
 /**
- * 检查主和弦到重属降五和弦(T→DD♭⁵)的特定限制
+ * 检查主和弦到重属降五和弦(T→DDb5)的特定限制
  * @param {Object} oldVoices - 前一和弦声部配置
  * @param {Object} newVoices - 目标和弦声部配置
  * @param {string} lastChord - 前一和弦名（应为主和弦）
- * @param {string} targetChord - 目标和弦名（应为DD...♭⁵）
+ * @param {string} targetChord - 目标和弦名（应为DD...b5）
  * @param {Object} keyInfo - 当前调性信息
  * @returns {number} 0表示合法，INVALID_COST表示非法
  *
@@ -246,7 +246,7 @@ export function checkCadential64Resolution(oldVoices, newVoices, lastChord, targ
  * 这种进行会产生不自然的增/减音程效果。
  */
 export function checkTtoDDFlat5(oldVoices, newVoices, lastChord, targetChord, keyInfo) {
-  if (!lastChord.startsWith('T') || !targetChord.startsWith('DD') || !targetChord.includes('♭⁵')) {
+  if (!lastChord.startsWith('T') || !targetChord.startsWith('DD') || !targetChord.includes('b5')) {
     return 0;
   }
 
@@ -308,34 +308,34 @@ export function checkFalseRelations(newSpells) {
 }
 
 /**
- * 检查D₇⁶和DD₇⁶和弦的附加六音解决规则
+ * 检查D76和DD76和弦的附加六音解决规则
  * @param {Object} oldVoices - 前一和弦声部配置
  * @param {Object} newVoices - 目标和弦声部配置
- * @param {string} lastChord - 前一和弦名（应为D₇⁶或DD₇⁶）
+ * @param {string} lastChord - 前一和弦名（应为D76或DD76）
  * @param {string} targetChord - 目标和弦名
  * @param {Object} newSpells - 拼写信息
  * @param {Object} keyInfo - 当前调性信息
  * @returns {number} 0表示合法，INVALID_COST表示非法
  *
- * D₇⁶: 属七和弦附加六度音（六度音通常在高音声部）
+ * D76: 属七和弦附加六度音（六度音通常在高音声部）
  * 解决时:
  *   - S声部(六度音)必须下行3-4半音到主音
  *   - 到VI时S声部必须保持不动
- *   - 到D₇时只有S声部移动，其他声部保持
+ *   - 到D7时只有S声部移动，其他声部保持
  */
 export function checkD7_6Rules(oldVoices, newVoices, lastChord, targetChord, newSpells, keyInfo) {
-  if (!['D₇⁶', 'DD₇⁶'].includes(lastChord)) return 0;
+  if (!['D76', 'DD76'].includes(lastChord)) return 0;
 
-  const isDD = lastChord === 'DD₇⁶';
-  // DD₇⁶解决到D功能组，D₇⁶解决到T功能组
+  const isDD = lastChord === 'DD76';
+  // DD76解决到D功能组，D76解决到T功能组
   const targetTonics = isDD
-    ? ['D', 'D₇', 'D₇不完全', 'D₆', 'K₆₄']
-    : ['T', 'T不完全', 'T₆', 't', 't不完全', 't₆'];
+    ? ['D', 'D7', 'D7不完全', 'D6', 'K64']
+    : ['T', 'T不完全', 'T6', 't', 't不完全', 't6'];
 
   if (targetTonics.includes(targetChord)) {
     const oldSStep = newSpells.last.S[1];    // 前一和弦S声部的音级
     const newSStep = newSpells.current.S[1]; // 目标和弦S声部的音级
-    // 解决目标: DD₇⁶→D的根音 或 D₇⁶→T的根音
+    // 解决目标: DD76→D的根音 或 D76→T的根音
     const targetRootStep = (keyInfo.root_step + (isDD ? 4 : 0)) % 7;
     // S声部必须下行3-4半音到目标根音
     if (newSStep !== targetRootStep || (![3, 4].includes(oldVoices.S - newVoices.S))) {
@@ -343,13 +343,13 @@ export function checkD7_6Rules(oldVoices, newVoices, lastChord, targetChord, new
     }
   }
 
-  // D₇⁶→VI时，S声部必须保持（作为共同音）
-  if (!isDD && ['VI', 'VI₆', 'VI_阻碍'].includes(targetChord)) {
+  // D76→VI时，S声部必须保持（作为共同音）
+  if (!isDD && ['VI', 'VI6', 'VI_阻碍'].includes(targetChord)) {
     if (oldVoices.S !== newVoices.S) return INVALID_COST;
   }
 
-  // 同家族和弦转换时(D₇⁶→D₇ 或 DD₇⁶→DD₇)
-  const sameFamilyTargets = !isDD ? ['D₇', 'D₇不完全'] : ['DD₇', 'DD₇不完全'];
+  // 同家族和弦转换时(D76→D7 或 DD76→DD7)
+  const sameFamilyTargets = !isDD ? ['D7', 'D7不完全'] : ['DD7', 'DD7不完全'];
   if (sameFamilyTargets.includes(targetChord)) {
     // B/T/A声部必须保持不动，只有S声部下行1-2半音
     if (oldVoices.B !== newVoices.B || oldVoices.T !== newVoices.T || oldVoices.A !== newVoices.A) {
@@ -365,7 +365,7 @@ export function checkD7_6Rules(oldVoices, newVoices, lastChord, targetChord, new
 /**
  * 检查附加六音和弦的六音位置
  * @param {Object} newVoices - 目标和弦声部配置
- * @param {string} targetChord - 目标和弦名（D⁶/D₇⁶/DD₇⁶）
+ * @param {string} targetChord - 目标和弦名（D6/D76/DD76）
  * @param {Object} newSpells - 拼写信息
  * @param {Object} keyInfo - 当前调性信息
  * @returns {number} 0表示合法，INVALID_COST表示非法
@@ -374,9 +374,9 @@ export function checkD7_6Rules(oldVoices, newVoices, lastChord, targetChord, new
  * 因为六度音作为旋律性附加音通常放在最高声部。
  */
 export function checkD6Constraint(newVoices, targetChord, newSpells, keyInfo) {
-  if (!['D⁶', 'D₇⁶', 'DD₇⁶'].includes(targetChord)) return 0;
+  if (!['D6', 'D76', 'DD76'].includes(targetChord)) return 0;
 
-  // 六度音的音级: DD₇⁶=下中音(VI级)，D₇⁽⁶⁾=上主音(II级)
+  // 六度音的音级: DD76=下中音(VI级)，D7⁽⁶⁾=上主音(II级)
   const addedSixthStep = targetChord.includes('DD')
     ? (keyInfo.root_step + 6) % 7
     : (keyInfo.root_step + 2) % 7;

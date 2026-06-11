@@ -12,7 +12,7 @@
  *
  * 序列化用于DAG节点键生成和状态存储。
  */
-export function v_to_tuple(v) {
+export function vToTuple(v) {
   return [v.S, v.A, v.T, v.B];
 }
 
@@ -23,7 +23,7 @@ export function v_to_tuple(v) {
  *
  * 反序列化用于从DAG节点或DP状态恢复声部配置。
  */
-export function tuple_to_v(t) {
+export function tupleToV(t) {
   return { S: t[0], A: t[1], T: t[2], B: t[3] };
 }
 
@@ -35,16 +35,16 @@ export function tuple_to_v(t) {
  *
  * 兄弟姐妹定义:
  *   同一核心功能的不同形式，如:
- *   - D₇, D₅₆, D₃₄, D₂ 都是D功能的兄弟姐妹（属七及其转位）
- *   - S, S₆, Sᵢᵢ 都是S功能的兄弟姐妹（下属功能组）
+ *   - D7, D56, D34, D2 都是D功能的兄弟姐妹（属七及其转位）
+ *   - S, S6, Sᵢᵢ 都是S功能的兄弟姐妹（下属功能组）
  *
  * 排除:
- *   - 六四和弦（₆₄）: 功能特殊，不视为兄弟姐妹
- *   - 增六和弦（⁺⁶）: 特性和弦，独立处理
- *   - N₆（那不勒斯六和弦）: 特性和弦，独立处理
+ *   - 六四和弦（64）: 功能特殊，不视为兄弟姐妹
+ *   - 增六和弦（+6）: 特性和弦，独立处理
+ *   - N6（那不勒斯六和弦）: 特性和弦，独立处理
  */
-export function get_chord_siblings(chord_name, dna_db) {
-  if (chord_name.includes('₆₄') || chord_name.includes('⁺⁶') || chord_name === 'N₆') {
+export function getChordSiblings(chord_name, dna_db) {
+  if (chord_name.includes('64') || chord_name.includes('+6') || chord_name === 'N6') {
     return [];
   }
 
@@ -57,7 +57,7 @@ export function get_chord_siblings(chord_name, dna_db) {
     let core = parts[0];
     const target = parts.length > 1 ? '/' + parts[1] : '';
     // 按长度降序排列，确保先匹配长后缀
-    const suffixes = ['₆₄', '₅₆', '₃₄', '不完全', '双三', '₆', '₇', '₉', '₂', '⁶'];
+    const suffixes = ['64', '56', '34', '不完全', '双三', '6', '7', '9', '2', '⁶'];
     for (const suffix of suffixes) {
       core = core.replace(suffix, '');
     }
@@ -66,14 +66,14 @@ export function get_chord_siblings(chord_name, dna_db) {
 
   const my_core = get_core(chord_name);
   // 判断是否为七和弦家族（包含七音的和弦）
-  const is_seventh_family = ['₇', '₅₆', '₃₄', '₂', '₉'].some(x => chord_name.includes(x));
+  const is_seventh_family = ['7', '56', '34', '2', '9'].some(x => chord_name.includes(x));
   const siblings = new Set();
 
   for (const k of Object.keys(dna_db)) {
-    if (k.includes('₆₄') || k.includes('⁺⁶') || k === 'N₆') continue;
+    if (k.includes('64') || k.includes('+6') || k === 'N6') continue;
     if (get_core(k) === my_core) {
       // 七和弦家族只与其他七和弦形式互为兄弟姐妹
-      if (is_seventh_family && !['₇', '₅₆', '₃₄', '₂', '₉'].some(x => k.includes(x))) {
+      if (is_seventh_family && !['7', '56', '34', '2', '9'].some(x => k.includes(x))) {
         continue;
       }
       siblings.add(k);

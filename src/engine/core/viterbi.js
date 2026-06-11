@@ -13,12 +13,12 @@
 
 import { getChordCandidates } from './candidateEngine.js';
 import { evaluateVoicing } from '../rules/index.js';
-import { v_to_tuple, tuple_to_v } from '../utils/index.js';
+import { vToTuple, tupleToV } from '../utils/index.js';
 
 /**
  * 计算最优声部排列路径
  *
- * @param {string[]} chordSequence - 和弦名称序列，如 ["T", "D₇", "T"]
+ * @param {string[]} chordSequence - 和弦名称序列，如 ["T", "D7", "T"]
  * @param {Object} initialVoicing - 第一和弦的声部配置 {S, A, T, B}
  * @param {Object} dnaDb - DNA数据库
  * @param {Object} keyInfo - 当前调性信息
@@ -36,11 +36,11 @@ export function calculateBestVoicing(chordSequence, initialVoicing, dnaDb, keyIn
 
   // 初始化第0层: 只有初始声部配置一个状态
   dp.push({
-    [`${chordSequence[0]}|${JSON.stringify(v_to_tuple(initialVoicing))}`]: {
+    [`${chordSequence[0]}|${JSON.stringify(vToTuple(initialVoicing))}`]: {
       cost: 0,                           // 初始代价为0
       prev: null,                        // 无前驱
       chord: chordSequence[0],           // 和弦名
-      tuple: v_to_tuple(initialVoicing)  // 声部元组 [S,A,T,B]
+      tuple: vToTuple(initialVoicing)  // 声部元组 [S,A,T,B]
     }
   });
 
@@ -59,14 +59,14 @@ export function calculateBestVoicing(chordSequence, initialVoicing, dnaDb, keyIn
     // 遍历前一层的所有状态，尝试转移到当前层的每个候选
     for (const [prevKey, prevData] of Object.entries(dp[dp.length - 1])) {
       const prevC = prevData.chord;          // 前一和弦名
-      const prevV = tuple_to_v(prevData.tuple);  // 前一声部配置
+      const prevV = tupleToV(prevData.tuple);  // 前一声部配置
 
       for (const currV of candidates) {
         // 评估从前一状态到当前候选的声部进行代价
         const cost = evaluateVoicing(prevV, currV, prevC, currentChord, keyInfo);
         if (cost < 999999) {  // 999999表示非法进行
           const totalCost = prevData.cost + cost;  // 累计代价
-          const currKey = `${currentChord}|${JSON.stringify(v_to_tuple(currV))}`;
+          const currKey = `${currentChord}|${JSON.stringify(vToTuple(currV))}`;
 
           // 动态规划核心: 只保留到达每个状态的最小代价路径
           if (!(currKey in nextLayer) || totalCost < nextLayer[currKey].cost) {
@@ -74,7 +74,7 @@ export function calculateBestVoicing(chordSequence, initialVoicing, dnaDb, keyIn
               cost: totalCost,
               prev: prevKey,                 // 记录前驱用于回溯
               chord: currentChord,
-              tuple: v_to_tuple(currV)
+              tuple: vToTuple(currV)
             };
           }
         }
@@ -101,7 +101,7 @@ export function calculateBestVoicing(chordSequence, initialVoicing, dnaDb, keyIn
   const path = [];
   let currKey = bestFinalKey;
   for (let i = dp.length - 1; i >= 0; i--) {
-    path.push(tuple_to_v(dp[i][currKey].tuple));
+    path.push(tupleToV(dp[i][currKey].tuple));
     currKey = dp[i][currKey].prev;
     // 如果在非起始层遇到null前驱，说明路径断裂
     if (currKey === null && i > 0) return null;

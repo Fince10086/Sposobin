@@ -51,7 +51,7 @@ function matchesRequired(pcs, requiredSet, maxCounts) {
 /**
  * 生成指定和弦的所有合法四声部排列
  *
- * @param {string} chordName - 和弦标识符，如 "T", "D₇", "Sᵢᵢ₆" 等
+ * @param {string} chordName - 和弦标识符，如 "T", "D7", "Sii6" 等
  * @param {Object} dnaDb - DNA数据库，包含和弦的连接关系、低音选项、必需音级等
  * @param {number|null} targetS - 固定高音MIDI值（高音题/写作模式使用），null表示自由模式
  * @param {number|null} targetB - 固定低音MIDI值（低音题模式使用），null表示自由模式

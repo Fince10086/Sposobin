@@ -11,7 +11,7 @@
 
 import { getChordCandidates } from './candidateEngine.js';
 import { evaluateVoicing } from '../rules/index.js';
-import { v_to_tuple, tuple_to_v, get_chord_siblings } from '../utils/index.js';
+import { vToTuple, tupleToV, getChordSiblings } from '../utils/index.js';
 import { START_CANDIDATES } from '../../constants/modes.js';
 
 /**
@@ -43,8 +43,8 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo, targetVoice = 'S') {
       ? getChordCandidates(c, dnaDb, null, firstTarget)
       : getChordCandidates(c, dnaDb, firstTarget);
     for (const v of cands) {
-      const key = `${c}|${JSON.stringify(v_to_tuple(v))}`;
-      currentLayer[key] = { next: new Set(), prev: new Set(), chord: c, tuple: v_to_tuple(v) };
+      const key = `${c}|${JSON.stringify(vToTuple(v))}`;
+      currentLayer[key] = { next: new Set(), prev: new Set(), chord: c, tuple: vToTuple(v) };
     }
   }
   // 如果候选集为空，回退到DNA中所有和弦（兜底策略）
@@ -54,8 +54,8 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo, targetVoice = 'S') {
         ? getChordCandidates(c, dnaDb, null, firstTarget)
         : getChordCandidates(c, dnaDb, firstTarget);
       for (const v of cands) {
-        const key = `${c}|${JSON.stringify(v_to_tuple(v))}`;
-        currentLayer[key] = { next: new Set(), prev: new Set(), chord: c, tuple: v_to_tuple(v) };
+        const key = `${c}|${JSON.stringify(vToTuple(v))}`;
+        currentLayer[key] = { next: new Set(), prev: new Set(), chord: c, tuple: vToTuple(v) };
       }
     }
   }
@@ -73,9 +73,9 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo, targetVoice = 'S') {
       const cName = prevLayer[stateKey].chord;
       for (const nxt of dnaDb[cName]?.next || []) {
         allPossibleNext.add(nxt);
-        for (const sib of get_chord_siblings(nxt, dnaDb)) allPossibleNext.add(sib);
+        for (const sib of getChordSiblings(nxt, dnaDb)) allPossibleNext.add(sib);
       }
-      for (const sib of get_chord_siblings(cName, dnaDb)) allPossibleNext.add(sib);
+      for (const sib of getChordSiblings(cName, dnaDb)) allPossibleNext.add(sib);
     }
 
     // 预计算候选声部排列，避免重复计算
@@ -97,18 +97,18 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo, targetVoice = 'S') {
       // 获取当前和弦的所有合法下一和弦（包括兄弟姐妹转位）
       for (const nxt of dnaDb[cName]?.next || []) {
         possibleNexts.add(nxt);
-        for (const sib of get_chord_siblings(nxt, dnaDb)) possibleNexts.add(sib);
+        for (const sib of getChordSiblings(nxt, dnaDb)) possibleNexts.add(sib);
       }
-      for (const sib of get_chord_siblings(cName, dnaDb)) possibleNexts.add(sib);
+      for (const sib of getChordSiblings(cName, dnaDb)) possibleNexts.add(sib);
 
       for (const nxtC of possibleNexts) {
         if (!(nxtC in dnaDb)) continue;
         for (const nxtV of candCache[nxtC] || []) {
           // 使用声部进行规则引擎评估转移是否合法
-          if (evaluateVoicing(tuple_to_v(vTup), nxtV, cName, nxtC, keyInfo) < 999999) {
-            const nxtKey = `${nxtC}|${JSON.stringify(v_to_tuple(nxtV))}`;
+          if (evaluateVoicing(tupleToV(vTup), nxtV, cName, nxtC, keyInfo) < 999999) {
+            const nxtKey = `${nxtC}|${JSON.stringify(vToTuple(nxtV))}`;
             if (!(nxtKey in nextLayer)) {
-              nextLayer[nxtKey] = { next: new Set(), prev: new Set(), chord: nxtC, tuple: v_to_tuple(nxtV) };
+              nextLayer[nxtKey] = { next: new Set(), prev: new Set(), chord: nxtC, tuple: vToTuple(nxtV) };
             }
             nextLayer[nxtKey].prev.add(stateKey);  // 建立反向链接
             nodeData.next.add(nxtKey);              // 建立正向链接
@@ -134,10 +134,10 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo, targetVoice = 'S') {
         const vTup = nodeData.tuple;
         for (const nxtC of Object.keys(dnaDb)) {
           for (const nxtV of fallbackCache[nxtC] || []) {
-            if (evaluateVoicing(tuple_to_v(vTup), nxtV, cName, nxtC, keyInfo) < 999999) {
-              const nxtKey = `${nxtC}|${JSON.stringify(v_to_tuple(nxtV))}`;
+            if (evaluateVoicing(tupleToV(vTup), nxtV, cName, nxtC, keyInfo) < 999999) {
+              const nxtKey = `${nxtC}|${JSON.stringify(vToTuple(nxtV))}`;
               if (!(nxtKey in fallbackLayer)) {
-                fallbackLayer[nxtKey] = { next: new Set(), prev: new Set(), chord: nxtC, tuple: v_to_tuple(nxtV) };
+                fallbackLayer[nxtKey] = { next: new Set(), prev: new Set(), chord: nxtC, tuple: vToTuple(nxtV) };
               }
               fallbackLayer[nxtKey].prev.add(stateKey);
               nodeData.next.add(nxtKey);

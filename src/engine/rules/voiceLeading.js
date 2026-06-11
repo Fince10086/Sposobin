@@ -101,7 +101,7 @@ export function checkSameDirection(oldVoices, newVoices) {
 }
 
 /**
- * 检查终止四六和弦(K₆₄)和其他六四和弦的声部进行约束
+ * 检查终止四六和弦(K64)和其他六四和弦的声部进行约束
  * @param {string} lastChord - 前一和弦名
  * @param {string} targetChord - 目标和弦名
  * @param {Object} oldVoices - 前一和弦声部配置
@@ -112,7 +112,7 @@ export function checkSameDirection(oldVoices, newVoices) {
  * 要求所有声部进行都非常平稳（不超过全音级进）。
  */
 export function checkCadential64Context(lastChord, targetChord, oldVoices, newVoices) {
-  const is64 = [lastChord, targetChord].some(c => ['S₆₄', 's₆₄', 'D₆₄', 'T₆₄', 't₆₄'].includes(c));
+  const is64 = [lastChord, targetChord].some(c => ['S64', 's64', 'D64', 'T64', 't64'].includes(c));
   if (!is64) return 0;
 
   // 低音只能级进（不超过全音）
@@ -134,13 +134,13 @@ export function checkCadential64Context(lastChord, targetChord, oldVoices, newVo
  * @param {Object} newVoices - 目标和弦声部配置
  * @returns {number} 0表示合法，INVALID_COST表示非法
  *
- * 辅助和弦（如 S-T₆-S 或 T₆-S-T₆ 中的中间和弦）要求:
+ * 辅助和弦（如 S-T6-S 或 T6-S-T6 中的中间和弦）要求:
  *   所有声部都只做不超过全音的级进运动。
  */
 export function checkAuxiliaryLinear(lastChord, targetChord, oldVoices, newVoices) {
   const isAux =
-    (['S', 's', 'S₆', 's₆', 'Sᵢᵢ₆', 'sᵢᵢ₆'].includes(lastChord) && ['T₆', 't₆'].includes(targetChord)) ||
-    (['T₆', 't₆'].includes(lastChord) && ['S', 's', 'S₆', 's₆', 'Sᵢᵢ₆', 'sᵢᵢ₆'].includes(targetChord));
+    (['S', 's', 'S6', 's6', 'Sii6', 'sii6'].includes(lastChord) && ['T6', 't6'].includes(targetChord)) ||
+    (['T6', 't6'].includes(lastChord) && ['S', 's', 'S6', 's6', 'Sii6', 'sii6'].includes(targetChord));
 
   if (!isAux) return 0;
 
@@ -198,7 +198,7 @@ export function checkParallelIntervals(oldVoices, newVoices, lastChord, targetCh
       if (oldInt === 7 && newInt === 7) {
         if (sameDir) {
           // German sixth 例外: 德国增六和弦解决到属和弦时允许平行五度
-          if (lastChord.includes('Ger') && ['D', 'D₆', 'D₇', 'D₇不完全'].includes(targetChord)) {
+          if (lastChord.includes('Ger') && ['D', 'D6', 'D7', 'D7不完全'].includes(targetChord)) {
             // 允许通过
           } else {
             penalty += PARALLEL_PENALTIES.fifth;
@@ -278,7 +278,7 @@ export function checkUnisons(voices, targetChord) {
 
   // 在复杂和弦中同度更加不自然，罚分乘以风格乘数
   if (penalty > 0 &&
-      (targetChord.includes('ᵥᵢᵢ') || targetChord.includes('⁺⁶') || targetChord.includes('DD'))) {
+      (targetChord.includes('vii') || targetChord.includes('+6') || targetChord.includes('DD'))) {
     penalty *= 4;
   }
   return penalty;

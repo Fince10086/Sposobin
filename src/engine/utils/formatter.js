@@ -2,8 +2,8 @@
  * 和弦名称格式化与分类模块
  *
  * 本模块处理和弦名称的显示格式化以及功能分组:
- *   - format_chord_name: 将内部和弦标识转换为乐谱显示格式
- *   - categorize_chords: 将和弦按功能组分类
+ *   - formatChordName: 将内部和弦标识转换为乐谱显示格式
+ *   - categorizeChords: 将和弦按功能组分类
  *
  * 分类体系基于斯波索宾和声学的功能组理论:
  *   自然音阶: 主功能、下属功能、属功能、导功能
@@ -18,7 +18,10 @@
  * 当前使用 LCBSposobin 字体自动处理角标显示，
  * 不需要额外的 Unicode 下标转换。
  */
-export function format_chord_name(name) {
+export function formatChordName(name) {
+  if (name === 'Dadd6') {
+    return { base: 'D', sup: '\u2076' };
+  }
   // 匹配尾部汉字后缀（如 "不完全"、"双三"、"阻碍"）
   const match = name.match(/^(.+?)([\u4e00-\u9fa5_][\u4e00-\u9fa5_]*)$/);
   if (match) {
@@ -42,7 +45,7 @@ export function format_chord_name(name) {
  *   3. 其他和弦 → 自然音阶和弦
  *      - 按功能前缀分配到对应分组
  */
-export function categorize_chords(chords) {
+export function categorizeChords(chords) {
   // 自然音阶功能组定义
   const diatonic = {
     '主功能组': [],          // 主和弦及其变形

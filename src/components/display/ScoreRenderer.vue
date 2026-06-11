@@ -87,10 +87,10 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
-import { store, sync_state } from './engine/store.js';
-import { KEY_REGISTRY, spell_midi } from './engine/tonality/index.js';
-import { PITCH_Y } from './engine/data/index.js';
-import { format_chord_name } from './engine/utils/formatter.js';
+import { store, syncState } from '../../engine/store.js';
+import { KEY_REGISTRY, spell_midi } from '../../engine/tonality/index.js';
+import { PITCH_Y } from '../../engine/data/index.js';
+import { formatChordName } from '../../engine/utils/formatter.js';
 
 // ============ 常量定义 ============
 /** 和弦横向间距：每个和弦占 85 像素 */
@@ -206,7 +206,7 @@ const historyNodes = computed(() => {
 
   return store.history.map((item, index) => {
     const { chord, voices } = item;
-    const node = { type: 'history', chord_display: format_chord_name(chord), notes: [], original_index: index };
+    const node = { type: 'history', chord_display: formatChordName(chord), notes: [], original_index: index };
 
     // 第一步：拼写所有声部的音符信息
     const spells = {};
@@ -399,7 +399,7 @@ function getAccDy(sym) {
 function rewindTo(index) {
   store.history = store.history.slice(0, index + 1);
   store.pending_note = null;
-  sync_state();
+  syncState();
 }
 </script>
 

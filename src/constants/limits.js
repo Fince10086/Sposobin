@@ -55,23 +55,13 @@ export const PARALLEL_PENALTIES = {
   maxAllowed: 5000           // 平行进行罚分允许的最大阈值，超过则视为非法
 };
 
-/** 声部交叉的基础罚分值: 后一和弦中某声部超越前一和弦相邻声部位置 */
-export const VOICE_OVERLAP_PENALTY = 5000;
-
-/** 声部交叉累计罚分的最大容忍值，超过则视为非法进行 */
-export const VOICE_OVERLAP_MAX = 10000;
-
-/** 四声部同向进行（全部上行或全部下行）的罚分值，避免过于单调的进行 */
-export const ALL_SAME_DIRECTION_PENALTY = 3000;
-
 /**
  * 同度音重叠罚分
  * 相邻声部之间出现同音（unison）在古典和声中应尽量避免，但在某些和弦中可容忍
  */
 export const UNISON_PENALTIES = { SA: 20, AT: 15, TB: 20 };
 
-/** 罕见七和弦（如T₇、s₇等）的使用罚分，鼓励使用常规和弦 */
+/** 罕见七和弦（如T7、s7等）的使用罚分，鼓励使用常规和弦 */
 export const RARE_SEVENTH_PENALTY = 2000;
 
 /** 风格性乘数: 在副属、增六、重属等复杂和弦中使用同度的额外惩罚倍数 */
-export const STYLISTIC_MULTIPLIER = 4;

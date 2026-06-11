@@ -133,7 +133,7 @@ export function spell_midi(midi_note, key_info, chord_name = "") {
   const rel_pc = ((pc - root_pc) % 12 + 12) % 12;
   let [rel_step, rel_alt] = REL_MAP[rel_pc];
 
-  if (chord_name.includes("/") && !chord_name.includes("♭")) {
+  if (chord_name.includes("/") && !chord_name.includes("b")) {
     const target = chord_name.split("/")[1];
     if (key_info.type === "MAJOR") {
       if (target === "II" && rel_pc === 1) [rel_step, rel_alt] = [0, 1];
