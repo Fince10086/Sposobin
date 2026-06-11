@@ -20,6 +20,7 @@ import { START_CANDIDATES } from '../../constants/modes.js';
  * @param {number[]} targetMelody - 目标旋律的MIDI音符数组
  * @param {Object} dnaDb - DNA数据库（已转调至当前调性）
  * @param {Object} keyInfo - 当前调性信息
+ * @param {string} targetVoice - 固定声部 ('S' 或 'B')，默认 'S'
  * @returns {Array|null} DAG层数组或null（如果无法构建）
  *
  * 构建流程:
@@ -29,15 +30,19 @@ import { START_CANDIDATES } from '../../constants/modes.js';
  *   4. 终止剪枝: 仅保留以主和弦(T/t)结尾的路径
  *   5. 反向死路清除: 删除无法通向终止状态的中间节点
  */
-export function buildFullDag(targetMelody, dnaDb, keyInfo) {
+export function buildFullDag(targetMelody, dnaDb, keyInfo, targetVoice = 'S') {
   const layers = [];
 
   // ===== 第0层: 初始和弦层 =====
   let currentLayer = {};
   // 优先使用常见的起始候选和弦（主、属、下属功能组）
+  const firstTarget = targetMelody[0];
   for (const c of START_CANDIDATES) {
     if (!(c in dnaDb)) continue;
-    for (const v of getChordCandidates(c, dnaDb, targetMelody[0])) {
+    const cands = targetVoice === 'B'
+      ? getChordCandidates(c, dnaDb, null, firstTarget)
+      : getChordCandidates(c, dnaDb, firstTarget);
+    for (const v of cands) {
       const key = `${c}|${JSON.stringify(v_to_tuple(v))}`;
       currentLayer[key] = { next: new Set(), prev: new Set(), chord: c, tuple: v_to_tuple(v) };
     }
@@ -45,7 +50,10 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo) {
   // 如果候选集为空，回退到DNA中所有和弦（兜底策略）
   if (Object.keys(currentLayer).length === 0) {
     for (const c of Object.keys(dnaDb)) {
-      for (const v of getChordCandidates(c, dnaDb, targetMelody[0])) {
+      const cands = targetVoice === 'B'
+        ? getChordCandidates(c, dnaDb, null, firstTarget)
+        : getChordCandidates(c, dnaDb, firstTarget);
+      for (const v of cands) {
         const key = `${c}|${JSON.stringify(v_to_tuple(v))}`;
         currentLayer[key] = { next: new Set(), prev: new Set(), chord: c, tuple: v_to_tuple(v) };
       }
@@ -74,7 +82,9 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo) {
     const candCache = {};
     for (const nxtC of allPossibleNext) {
       if (nxtC in dnaDb) {
-        candCache[nxtC] = getChordCandidates(nxtC, dnaDb, tgtS);
+        candCache[nxtC] = targetVoice === 'B'
+          ? getChordCandidates(nxtC, dnaDb, null, tgtS)
+          : getChordCandidates(nxtC, dnaDb, tgtS);
       }
     }
 
@@ -115,7 +125,9 @@ export function buildFullDag(targetMelody, dnaDb, keyInfo) {
       const fallbackLayer = {};
       const fallbackCache = {};
       for (const nxtC of Object.keys(dnaDb)) {
-        fallbackCache[nxtC] = getChordCandidates(nxtC, dnaDb, tgtS);
+        fallbackCache[nxtC] = targetVoice === 'B'
+          ? getChordCandidates(nxtC, dnaDb, null, tgtS)
+          : getChordCandidates(nxtC, dnaDb, tgtS);
       }
       for (const [stateKey, nodeData] of Object.entries(prevLayer)) {
         const cName = nodeData.chord;

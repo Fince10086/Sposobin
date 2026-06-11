@@ -304,6 +304,20 @@ const ghostNotes = computed(() => {
       });
     }
   }
+  // 低音题模式下，显示剩余未填充的目标低音旋律
+  else if (store.target_bass?.length > 0 && store.mode === 'BASS' && store.history.length < store.target_bass.length) {
+    for (let i = store.history.length; i < store.target_bass.length; i++) {
+      const [letter, step, alt, octave] = spell_midi(store.target_bass[i], ki, '');
+      const y = PITCH_Y[`${letter}${octave}_bass`] || 210;
+      const keyAlt = keySigAlts.value[step];
+      const acc = alt !== keyAlt ? (ACC_MAP[String(alt)] || '') : '';
+      const accX = acc ? -18 : 0;
+      notes.push({
+        type: 'target', chord_display: '',
+        notes: [{ v: 'B', y, x: 0, acc, acc_x: accX, ledgers: calcLedgers(y, true), is_bass: true }],
+      });
+    }
+  }
 
   return notes;
 });
@@ -328,6 +342,7 @@ const playheadX = computed(() => {
   if (store.playbackIndex !== null) return startX + store.playbackIndex * NOTE_SPACING;
   const idx = store.history.length;
   if (store.target_melody.length > 0 && idx < store.target_melody.length) return startX + idx * NOTE_SPACING;
+  if (store.target_bass.length > 0 && idx < store.target_bass.length) return startX + idx * NOTE_SPACING;
   return startX + Math.max(0, store.history.length - 1) * NOTE_SPACING;
 });
 

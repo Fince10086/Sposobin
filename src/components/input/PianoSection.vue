@@ -39,10 +39,12 @@ onMounted(() => {
 function isKeyDisabled(midi) {
   // FREE 模式全部禁用
   if (store.mode === 'FREE') return true;
-  // SOPRANO 生成后全部禁用
-  if (store.mode === 'SOPRANO' && store.history.length > 0) return true;
+  // SOPRANO/BASS 生成后全部禁用
+  if ((store.mode === 'SOPRANO' || store.mode === 'BASS') && store.history.length > 0) return true;
   // SOPRANO/COMPOSE 模式下超出范围的键禁用
   if ((store.mode === 'SOPRANO' || store.mode === 'COMPOSE') && (midi < 57 || midi > 84)) return true;
+  // BASS 模式下超出低音范围的键禁用
+  if (store.mode === 'BASS' && (midi < 36 || midi > 64)) return true;
   return false;
 }
 

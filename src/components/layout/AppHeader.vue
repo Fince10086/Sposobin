@@ -39,7 +39,7 @@ const modes = [
   { key: 'FREE', label: '自由模式' },
   { key: 'SOPRANO', label: '高音题' },
   { key: 'COMPOSE', label: '旋律写作' },
-  { key: 'BASS', label: '低音题', disabled: true },
+  { key: 'BASS', label: '低音题' },
 ];
 </script>
 

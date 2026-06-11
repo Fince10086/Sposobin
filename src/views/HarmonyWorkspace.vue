@@ -22,18 +22,35 @@
               </button>
               <button @click="handleReset" class="btn">清空</button>
               <template v-if="store.mode === 'SOPRANO'">
-                <button 
-                  @click="handleUndoNote" 
+                <button
+                  @click="handleUndoNote"
                   class="btn btn-undo"
                   :disabled="store.target_melody.length === 0 || store.history.length > 0"
                   title="撤销最后一个音"
                 >
                   ←
                 </button>
-                <button 
-                  @click="handleStartSoprano" 
+                <button
+                  @click="handleStartSoprano"
                   class="btn btn-generate"
                   :disabled="store.target_melody.length === 0"
+                >
+                  确认并生成
+                </button>
+              </template>
+              <template v-if="store.mode === 'BASS'">
+                <button
+                  @click="handleUndoBass"
+                  class="btn btn-undo"
+                  :disabled="store.target_bass.length === 0 || store.history.length > 0"
+                  title="撤销最后一个音"
+                >
+                  ←
+                </button>
+                <button
+                  @click="handleStartBass"
+                  class="btn btn-generate"
+                  :disabled="store.target_bass.length === 0"
                 >
                   确认并生成
                 </button>
@@ -134,6 +151,9 @@ function handlePianoClick(midi) {
   } else if (store.mode === 'SOPRANO') {
     // 添加音符到目标旋律
     store.target_melody.push(midi);
+  } else if (store.mode === 'BASS') {
+    // 添加音符到目标低音旋律
+    store.target_bass.push(midi);
   } else {
     playSingleChord({ S: midi });
   }
@@ -147,6 +167,17 @@ function handleUndoNote() {
 
 function handleStartSoprano() {
   // 构建DAG并获取候选和弦
+  sync_state();
+}
+
+function handleUndoBass() {
+  if (store.target_bass.length > 0) {
+    store.target_bass.pop();
+  }
+}
+
+function handleStartBass() {
+  // 构建DAG并获取候选和弦（低音题）
   sync_state();
 }
 

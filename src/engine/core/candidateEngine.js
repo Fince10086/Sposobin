@@ -54,18 +54,23 @@ function matchesRequired(pcs, requiredSet, maxCounts) {
  * @param {string} chordName - 和弦标识符，如 "T", "D₇", "Sᵢᵢ₆" 等
  * @param {Object} dnaDb - DNA数据库，包含和弦的连接关系、低音选项、必需音级等
  * @param {number|null} targetS - 固定高音MIDI值（高音题/写作模式使用），null表示自由模式
+ * @param {number|null} targetB - 固定低音MIDI值（低音题模式使用），null表示自由模式
  * @returns {Array} 合法排列数组，每个元素为 {S, A, T, B} 对象
  *
  * 生成策略:
- *   自由模式(targetS=null):
+ *   自由模式(targetS=null, targetB=null):
  *     遍历所有可能的S(女高音)、A(女低音)、T(男高音)组合，
  *     只要满足音级要求且声部间距不超过纯八度即为合法。
  *
  *   固定高音模式(targetS有值):
  *     高音已锁定，只需搜索A和T的有效范围（受S和低音约束），
  *     大幅减少搜索空间。
+ *
+ *   固定低音模式(targetB有值):
+ *     低音已锁定（且必须匹配该和弦的bass_options之一），
+ *     只需搜索T、A、S的有效范围（受B约束）。
  */
-export function getChordCandidates(chordName, dnaDb, targetS = null) {
+export function getChordCandidates(chordName, dnaDb, targetS = null, targetB = null) {
   const dna = dnaDb[chordName];
   if (!dna) return [];  // DNA中无此和弦定义
 
@@ -79,7 +84,40 @@ export function getChordCandidates(chordName, dnaDb, targetS = null) {
     const bassPc = bass % 12;
     if (!requiredSet.has(bassPc)) continue; // 低音音级必须属于必需集合
 
-    if (targetS !== null) {
+    if (targetB !== null) {
+      // ===== 固定低音模式 =====
+      if (bass !== targetB) continue;  // 低音必须匹配 targetB
+      const bPc = targetB % 12;
+
+      // T(男高音)范围: (低音, 低音+24]，但不超过可用范围
+      const minT = bass + 1;
+      const maxT = Math.min(bass + 24, 69);  // 69 = C#5，男高音上限
+      for (let t = minT; t <= maxT; t++) {
+        if (!NOTE_SET.has(t)) continue;
+        const tPc = t % 12;
+
+        // A(女低音)范围: [T, min(T+12, 74)]，74 = D5，女低音上限
+        const maxA = Math.min(t + 12, 74);
+        for (let a = t; a <= maxA; a++) {
+          if (!NOTE_SET.has(a)) continue;
+          if (a - t > 12) continue;  // 女低与男高之间不能超过纯八度
+          const aPc = a % 12;
+
+          // S(女高音)范围: [A, min(A+12, 84)]，84 = A5，女高音上限
+          const maxS = Math.min(a + 12, 84);
+          for (let s = a; s <= maxS; s++) {
+            if (!NOTE_SET.has(s)) continue;
+            if (s - a > 12) continue;  // 女高与女低之间不能超过纯八度
+            const sPc = s % 12;
+
+            const pcs = [sPc, aPc, tPc, bPc];
+            if (matchesRequired(pcs, requiredSet, maxCounts)) {
+              candidates.push({ S: s, A: a, T: t, B: targetB });
+            }
+          }
+        }
+      }
+    } else if (targetS !== null) {
       // ===== 固定高音模式 =====
       const sPc = targetS % 12;
       if (!requiredSet.has(sPc)) continue;  // 高音音级必须属于必需集合

@@ -73,6 +73,9 @@ const emptyTitle = computed(() => {
   if (store.mode === 'SOPRANO') {
     return store.target_melody.length > 0 ? '无可用路径' : '等待旋律确认中';
   }
+  if (store.mode === 'BASS') {
+    return store.target_bass.length > 0 ? '无可用路径' : '等待低音确认中';
+  }
   if (store.mode === 'COMPOSE') return '请选定旋律音';
   return '无可用和弦';
 });
