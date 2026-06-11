@@ -21,6 +21,22 @@
                 {{ isPlaying ? '停止' : '试听' }}
               </button>
               <button @click="handleReset" class="btn">清空</button>
+              <button
+                @click="handleExportMidi"
+                class="btn"
+                :disabled="store.history.length === 0"
+                title="导出 MIDI"
+              >
+                MIDI
+              </button>
+              <button
+                @click="handleExportXml"
+                class="btn"
+                :disabled="store.history.length === 0"
+                title="导出 MusicXML"
+              >
+                MXL
+              </button>
               <template v-if="store.mode === 'SOPRANO'">
                 <button
                   @click="handleUndoNote"
@@ -97,6 +113,8 @@ import { store, syncState, resetState, transposeState } from '../engine/store.js
 import { KEY_REGISTRY } from '../engine/tonality/index.js';
 import { useAudio } from '../composables/useAudio.js';
 import { usePlayback } from '../composables/usePlayback.js';
+import { exportToMidi } from '../exporters/midiExporter.js';
+import { exportToMusicXML } from '../exporters/musicxmlExporter.js';
 
 import AppHeader from '../components/layout/AppHeader.vue';
 import PianoSection from '../components/input/PianoSection.vue';
@@ -156,6 +174,18 @@ async function handlePlaySequence() {
     return;
   }
   await startPlayback(store.history);
+}
+
+function handleExportMidi() {
+  if (store.history.length === 0) return;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  exportToMidi(store.history, store.key_name, `sposobin_${timestamp}.mid`);
+}
+
+function handleExportXml() {
+  if (store.history.length === 0) return;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  exportToMusicXML(store.history, store.key_name, `sposobin_${timestamp}.mxl`);
 }
 
 function handlePianoClick(midi) {
