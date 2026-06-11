@@ -171,7 +171,7 @@ h1 {
 
   h1 {
     font-size: 1.5rem;
-    align-items: center;
+    align-items: flex-end;
   }
 
   .author-info {

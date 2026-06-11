@@ -318,7 +318,7 @@ onMounted(() => {
 /* Mobile portrait mode */
 @media (max-width: 649px) {
   .workspace {
-    padding: 12px;
+    padding: 24px 12px 12px;
   }
 
   .main-layout {
