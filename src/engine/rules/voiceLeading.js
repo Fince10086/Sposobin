@@ -12,8 +12,7 @@
  */
 
 import {
-  INVALID_COST, VOICE_RANGES, SPACING_LIMITS, PARALLEL_PENALTIES,
-  VOICE_OVERLAP_PENALTY, VOICE_OVERLAP_MAX, ALL_SAME_DIRECTION_PENALTY, UNISON_PENALTIES
+  INVALID_COST, VOICE_RANGES, SPACING_LIMITS, PARALLEL_PENALTIES, UNISON_PENALTIES
 } from '../../constants/limits.js';
 
 /**
@@ -65,17 +64,16 @@ export function checkVoiceSpacing(voices) {
  */
 export function checkVoiceOverlap(oldVoices, newVoices, isSameChord) {
   if (isSameChord) return 0;
-  let penalty = 0;
   const { S: nS, A: nA, T: nT, B: nB } = newVoices;
   const { S: oS, A: oA, T: oT, B: oB } = oldVoices;
 
-  // 逐一检查各声部是否跨越了前一和弦相邻声部的位置
-  if (nS < oA) penalty += VOICE_OVERLAP_PENALTY;      // S低于前A
-  if (nA > oS || nA < oT) penalty += VOICE_OVERLAP_PENALTY;  // A超越前S或低于前T
-  if (nT > oA || nT < oB) penalty += VOICE_OVERLAP_PENALTY;  // T超越前A或低于前B
-  if (nB > oT) penalty += VOICE_OVERLAP_PENALTY;      // B超越前T
+  // 严格禁止声部超越：后一和弦中某声部不得超越前一和弦相邻声部的位置
+  if (nS < oA) return INVALID_COST;      // S低于前A
+  if (nA > oS || nA < oT) return INVALID_COST;  // A超越前S或低于前T
+  if (nT > oA || nT < oB) return INVALID_COST;  // T超越前A或低于前B
+  if (nB > oT) return INVALID_COST;      // B超越前T
 
-  return penalty >= VOICE_OVERLAP_MAX ? INVALID_COST : penalty;
+  return 0;
 }
 
 /**
@@ -93,10 +91,10 @@ export function checkSameDirection(oldVoices, newVoices) {
     return d > 0 ? 1 : (d < 0 ? -1 : 0);  // 1=上行, -1=下行, 0=保持
   });
 
-  // 如果所有声部都上行或都下行（且没有保持不动的），施加罚分
+  // 如果所有声部都上行或都下行（且没有保持不动的），严格禁止
   if (diffs.filter(d => d === 0).length === 0) {
     if (diffs.every(d => d === 1) || diffs.every(d => d === -1)) {
-      return ALL_SAME_DIRECTION_PENALTY;
+      return INVALID_COST;
     }
   }
   return 0;

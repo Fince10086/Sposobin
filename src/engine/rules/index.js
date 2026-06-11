@@ -62,7 +62,9 @@ export function evaluateVoicing(oldVoices, newVoices, lastChord, targetChord, ke
   if (cost >= INVALID_COST) return INVALID_COST;
   let totalPenalty = cost;
 
-  totalPenalty += voiceLeading.checkSameDirection(oldVoices, newVoices);
+  cost = voiceLeading.checkSameDirection(oldVoices, newVoices);
+  if (cost >= INVALID_COST) return INVALID_COST;
+  totalPenalty += cost;
 
   cost = voiceLeading.checkCadential64Context(lastChord, targetChord, oldVoices, newVoices);
   if (cost >= INVALID_COST) return INVALID_COST;
