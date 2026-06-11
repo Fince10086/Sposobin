@@ -21,22 +21,6 @@
                 {{ isPlaying ? '停止' : '试听' }}
               </button>
               <button @click="handleReset" class="btn">清空</button>
-              <button
-                @click="handleExportMidi"
-                class="btn"
-                :disabled="store.history.length === 0"
-                title="导出 MIDI"
-              >
-                MIDI
-              </button>
-              <button
-                @click="handleExportXml"
-                class="btn"
-                :disabled="store.history.length === 0"
-                title="导出 MusicXML"
-              >
-                MXL
-              </button>
               <template v-if="store.mode === 'SOPRANO'">
                 <button
                   @click="handleUndoNote"
@@ -72,6 +56,24 @@
                 </button>
               </template>
               <button @click="showAboutModal()" class="btn btn-help">?</button>
+            </div>
+            <div class="toolbar-actions toolbar-export">
+              <button
+                @click="handleExportMidi"
+                class="btn"
+                :disabled="store.history.length === 0"
+                title="导出 MIDI"
+              >
+                MIDI
+              </button>
+              <button
+                @click="handleExportXml"
+                class="btn"
+                :disabled="store.history.length === 0"
+                title="导出 MusicXML"
+              >
+                MXL
+              </button>
             </div>
           </div>
 
@@ -273,6 +275,7 @@ onMounted(() => {
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   padding: 8px 12px;
   gap: 12px;
@@ -306,6 +309,10 @@ onMounted(() => {
   border: 2px solid #000;
   border-radius: 4px;
   overflow: hidden;
+}
+
+.toolbar-export {
+  /* 紧跟在上一组按钮后，左对齐 */
 }
 
 .toolbar-actions .btn {
